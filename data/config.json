@@ -1,0 +1,49 @@
+{
+    "playerSpeed": 250,
+    "enemies": 
+        {
+        "basic": 
+            {
+                "speed": 100,
+                "health": 1,
+                "shoot": false
+            },
+            "fast": 
+            {
+                "speed": 200,
+                "health": 1,
+                "shoot": false
+            },
+            "tank": 
+            {
+                "speed": 60,
+                "health": 3,
+                "shoot": false
+            },
+            "shooter": 
+            {
+                "speed": 80,
+                "health": 2,
+                "shoot": true,
+                "fireRate": 1500
+            }
+        },
+    "waves": 
+    [
+        {
+            "duration": 5000,
+            "spawnRate": 1000,
+            "enemyTypes": ["basic"]
+        },
+        {
+            "duration": 8000,
+            "spawnRate": 800,
+            "enemyTypes": ["basic", "fast"]
+        },
+        {
+            "duration": 12000,
+            "spawnRate": 600,
+            "enemyTypes": ["basic", "fast", "shooter"]
+        }
+    ]
+}
