@@ -1,0 +1,67 @@
+{
+    "ship_01": {
+        "key":          "ship_01",
+        "texture":      "player",
+        "bulletTexture":"bullet_player",
+        "name":         "Viper",
+        "description":  "Starter ship. Balanced stats.",
+        "price":        0,
+        "speed":        300,
+        "fireRate":     250,
+        "health":       100,
+        "damage":       10,
+        "special":      "none"
+    },
+    "ship_02": {
+        "key":          "ship_02",
+        "texture":      "player2",
+        "bulletTexture":"bullet_player",
+        "name":         "Phantom",
+        "description":  "Fast but fragile. High fire rate.",
+        "price":        500,
+        "speed":        420,
+        "fireRate":     150,
+        "health":       70,
+        "damage":       10,
+        "special":      "fast"
+    },
+    "ship_03": {
+        "key":          "ship_03",
+        "texture":      "player3",
+        "bulletTexture":"bullet_player",
+        "name":         "Titan",
+        "description":  "Slow and tough. Takes hits well.",
+        "price":        800,
+        "speed":        200,
+        "fireRate":     350,
+        "health":       200,
+        "damage":       15,
+        "special":      "tank"
+    },
+    "ship_04": {
+        "key":          "ship_04",
+        "texture":      "player4",
+        "bulletTexture":"bullet_player",
+        "name":         "Wraith",
+        "description":  "Balanced with extra damage output.",
+        "price":        1200,
+        "speed":        320,
+        "fireRate":     200,
+        "health":       110,
+        "damage":       20,
+        "special":      "damage"
+    },
+    "ship_05": {
+        "key":          "ship_05",
+        "texture":      "player5",
+        "bulletTexture":"bullet_player",
+        "name":         "Nova",
+        "description":  "Top tier. Best in every stat.",
+        "price":        2500,
+        "speed":        380,
+        "fireRate":     130,
+        "health":       160,
+        "damage":       25,
+        "special":      "elite"
+    }
+}

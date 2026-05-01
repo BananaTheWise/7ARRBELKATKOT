@@ -1,0 +1,492 @@
+ASSETS:
+Ship Variants (min. 5–8 ships)
+
+    ship_1_idle.png — Default starter ship, idle frame
+    ship_1_thrust.png / ship_1_thrust_spritesheet.png — Thruster animation frames (4–6 frames)
+    ship_1_damaged.png — Damaged state visual (flickering, cracks)
+    ship_2_idle.png — Second ship variant (heavier/faster theme)
+    ship_2_thrust_spritesheet.png
+    ship_2_damaged.png
+    ship_3_idle.png — Third ship variant (glass cannon theme)
+    ship_3_thrust_spritesheet.png
+    ship_3_damaged.png
+    ship_4_idle.png — Fourth ship (co-op partner exclusive skin)
+    ship_4_thrust_spritesheet.png
+    ship_shield_effect.png — Shield bubble overlay (animated pulse)
+    ship_invincible_flash.png — Invincibility effect overlay
+    ship_engine_glow.png — Engine particle/glow overlay
+    ============================DONE================================================
+
+Recommended: export all ships as texture atlas (.json + .png) via TexturePacker for Phaser.js
+
+Basic Bullets
+
+    bullet_basic.png — Default yellow/white laser bullet
+    bullet_basic_spritesheet.png — Animated glow frames (2–4 frames)
+    bullet_double.png — Double shot bullet (wider spread)
+    bullet_triple.png — Triple shot diagonal bullet
+    bullet_rapid.png — Rapid fire small bullet
+    ============================In Progress========================================
+
+Special Weapons
+
+    bullet_laser_beam.png — Continuous laser beam strip (tileable)
+    bullet_laser_tip.png — Laser beam tip cap
+    bullet_missile.png — Homing missile sprite
+    bullet_missile_trail_spritesheet.png — Missile smoke trail animation
+    bullet_plasma.png — Plasma ball shot
+    bullet_plasma_spritesheet.png — Pulsing plasma animation
+    bullet_spread_fan.png — Spread shot cone bullet
+    bullet_bouncer.png — Bouncing energy orb
+    bullet_bomb.png — Bomb projectile (falls/drops)
+    bullet_lightning_arc.png — Chain lightning visual
+    bullet_freeze_ray.png — Ice/freeze projectile
+    bullet_nuke_projectile.png — Super weapon nuke ball
+    ============================In Progress========================================
+
+Explosions & Impact Effects
+
+    explosion_small_spritesheet.png — Small enemy die explosion (8–12 frames)
+    explosion_medium_spritesheet.png — Medium boss hit explosion
+    explosion_large_spritesheet.png — Big boss death explosion
+    explosion_nuke_spritesheet.png — Screen-wide nuke shockwave
+    impact_hit_spritesheet.png — Bullet-on-enemy hit spark
+    impact_shield_hit_spritesheet.png — Shield block visual
+    ============================In Progress========================================
+
+Normal Chickens
+
+    enemy_chicken_basic_idle_spritesheet.png — Standard chicken idle flap (4–6 frames)
+    enemy_chicken_basic_shoot.png — Shoot pose frame
+    enemy_chicken_basic_damaged.png — Damaged/feathers-flying state
+    enemy_chicken_basic_death_spritesheet.png — Death explosion / feathers burst
+    enemy_chicken_fat_idle_spritesheet.png — Fat/heavy chicken idle
+    enemy_chicken_fat_damaged.png
+    enemy_chicken_fat_death_spritesheet.png
+    enemy_chicken_fast_idle_spritesheet.png — Speed runner chicken
+    enemy_chicken_armored_idle_spritesheet.png — Armored version (helmet on)
+    enemy_chicken_armored_helmetoff.png — Helmet knocked off state
+    enemy_chicken_robot_idle_spritesheet.png — Robotic/cyborg chicken
+    enemy_chicken_ghost_idle_spritesheet.png — Ghost/transparent chicken (semi-opaque, biome-specific)
+    enemy_chicken_ice_idle_spritesheet.png — Ice biome chicken
+    enemy_chicken_lava_idle_spritesheet.png — Lava biome fire chicken
+    enemy_chicken_space_idle_spritesheet.png — Deep space alien chicken
+    enemy_chicken_toxic_idle_spritesheet.png — Toxic/acid biome chicken
+    enemy_chicken_storm_idle_spritesheet.png — Storm/electric biome chicken
+
+Chicken Projectiles
+
+    egg_projectile.png — Standard egg drop
+    egg_projectile_gold.png — Powered-up golden egg
+    egg_projectile_ice.png — Ice egg (freeze on hit)
+    egg_projectile_fire.png — Fire egg
+    egg_projectile_toxic.png — Acid egg
+    egg_splat_spritesheet.png — Egg smash on ground/shield animation
+
+
+
+    boss_mother_hen_idle_spritesheet.png — Giant mother hen (main level boss), full animated idle
+    boss_mother_hen_attack_spritesheet.png — Attack animation (multiple phases)
+    boss_mother_hen_phase2_spritesheet.png — Phase 2 enraged (below 50% HP)
+    boss_mother_hen_death_spritesheet.png — Epic death sequence
+    boss_rooster_king_idle_spritesheet.png — Rooster King (mid-game boss)
+    boss_rooster_king_attack_spritesheet.png
+    boss_rooster_king_death_spritesheet.png
+
+    boss_cyber_hen_idle_spritesheet.png — Robotic Hen (tech biome boss)
+    boss_cyber_hen_shield.png — Energy shield visual
+    boss_ice_emperor_idle_spritesheet.png — Ice biome boss
+    boss_lava_lord_idle_spritesheet.png — Lava biome boss
+    boss_storm_eagle_idle_spritesheet.png — Storm biome boss
+    boss_final_godhen_idle_spritesheet.png — Final mega boss (multiple phases, huge sprite)
+    boss_final_godhen_phase2_spritesheet.png
+    boss_final_godhen_phase3_spritesheet.png
+    boss_healthbar_frame.png — Boss-specific health bar UI frame
+    boss_entry_effect_spritesheet.png — Boss entry cinematic particles
+
+Bosses should be 2x–4x normal enemy scale. Export at high resolution (512×512 or larger) then scale in Phaser
+
+Space (Default Biome)
+
+    bg_space_layer1.png — Far stars (dark, tiny dots) — parallax slow
+    bg_space_layer2.png — Mid nebula/galaxy clouds — parallax medium
+    bg_space_layer3.png — Near asteroids/debris — parallax fast
+    bg_space_planet1.png — Decorative gas planet (non-interactive)
+    bg_space_planet2.png — Second planet variant
+
+Ice / Comet Biome
+
+    bg_ice_layer1.png — Deep ice crystal star field
+    bg_ice_layer2.png — Floating ice chunks / comet field
+    bg_ice_layer3.png — Foreground ice shards (fast parallax)
+    bg_ice_comet.png — Animated comet sprite (streaks across screen)
+    bg_ice_snowflakes_spritesheet.png — Falling snowflake particle
+
+
+===============checkpoint=======================================
+
+Lava / Volcanic Biome
+
+    bg_lava_layer1.png — Dark volcanic nebula sky
+    bg_lava_layer2.png — Floating lava rocks / meteor layer
+    bg_lava_layer3.png — Foreground fire debris fast layer
+    bg_lava_geyser_spritesheet.png — Erupting lava geyser animation
+    bg_lava_drip_spritesheet.png — Lava drop particle
+
+Storm / Electric Biome
+
+    bg_storm_layer1.png — Turbulent dark cloud starfield
+    bg_storm_layer2.png — Mid-storm cloud layer
+    bg_storm_layer3.png — Foreground storm particles
+    bg_storm_lightning_spritesheet.png — Lightning bolt flash animation
+    bg_storm_rain_particle.png — Rain/hail single particle
+
+Toxic / Acid Biome
+
+    bg_toxic_layer1.png — Sickly green nebula background
+    bg_toxic_layer2.png — Floating acid bubbles mid layer
+    bg_toxic_layer3.png — Foreground toxic spore particles
+    bg_toxic_bubble_spritesheet.png — Floating acid bubble pop
+
+Deep Space / Void Biome
+
+    bg_void_layer1.png — Pure darkness with distant galaxy
+    bg_void_layer2.png — Wormhole/portal visual mid layer
+    bg_void_anomaly_spritesheet.png — Space anomaly shimmer
+    bg_void_portal_spritesheet.png — Wormhole animation
+
+Shared Environment Assets
+
+    bg_asteroid_small.png — Small floating asteroid
+    bg_asteroid_medium.png
+    bg_asteroid_large.png
+    bg_asteroid_breakable_spritesheet.png — Asteroid that cracks and splits
+    bg_stars_tile.png — Tileable seamless star tile for scrolling
+    bg_transition_warp_spritesheet.png — Level transition warp effect
+
+
+Weapon Powerups
+
+    powerup_double_shot.png
+    powerup_triple_shot.png
+    powerup_laser.png
+    powerup_missile.png
+    powerup_plasma.png
+    powerup_spread.png
+    powerup_rapidfire.png
+    powerup_lightning.png
+    powerup_freeze.png
+    powerup_nuke.png
+
+Defense Powerups
+
+    powerup_shield.png
+    powerup_extralife.png — Extra life (small ship icon)
+    powerup_invincible.png — Temporary invincibility star
+    powerup_health_small.png — Small HP restore
+    powerup_health_large.png — Full HP restore
+    powerup_magnet.png — Coin/collectable magnet
+
+Utility Powerups
+
+    powerup_slowtime.png — Time slow effect (clock icon)
+    powerup_speedboost.png — Movement speed boost
+    powerup_bomb_powerup.png — Screen clear bomb pickup
+    powerup_coop_revive.png — Co-op partner revive item
+    powerup_xp_boost.png — XP/score multiplier
+
+Collectables
+
+    collectable_coin_gold.png — Standard gold coin
+    collectable_coin_silver.png
+    collectable_coin_bronze.png
+    collectable_gem_blue.png — Blue gem (rare)
+    collectable_gem_red.png
+    collectable_gem_purple.png
+    collectable_feather.png — Chicken feather (currency/lore)
+    collectable_egg_golden.png — Rare golden egg collectable
+    collectable_drumstick.png — Health restore food item (themed)
+    collectable_star.png — Score star
+    collectable_magnet_pull_spritesheet.png — Magnet attract animation
+    collectable_xp_orb.png — XP experience orb
+    collectable_xp_orb_large.png
+
+All powerups should have an idle spin animation (4–6 frames) + a pickup flash effect spritesheet
+
+    powerup_pickup_flash_spritesheet.png — Generic pickup burst effect
+    powerup_glow_pulse_spritesheet.png — Glow idle loop
+
+
+HUD (In-Game Overlay)
+
+    hud_healthbar_frame.png — Health bar outer frame/border
+    hud_healthbar_fill_green.png — HP fill (full health)
+    hud_healthbar_fill_yellow.png — HP fill (mid health)
+    hud_healthbar_fill_red.png — HP fill (low health)
+    hud_shield_bar_frame.png — Shield bar frame
+    hud_shield_bar_fill.png — Shield fill blue
+    hud_lives_icon.png — Small ship icon (×3 lives display)
+    hud_score_bg.png — Score panel background
+    hud_weapon_slot_frame.png — Current weapon display box
+    hud_weapon_slot_active.png — Active state glow
+    hud_powerup_timer_bar.png — Powerup duration countdown bar
+    hud_minimap_frame.png — Minimap border (if used)
+    hud_coop_panel.png — Co-op partner status panel
+    hud_coop_disconnect_icon.png — Partner disconnected warning
+    hud_boss_hp_frame.png — Boss HP bar frame (large, dramatic)
+    hud_boss_hp_fill.png — Boss HP fill strip
+    hud_level_progress_bar.png — Wave/level progress indicator
+    hud_combo_counter_bg.png — Kill combo display background
+    hud_multiplier_badge.png — Score multiplier ×2 ×3 etc badge
+
+Main Menu
+
+    ui_logo.png — Game logo / title art (7arb el Katkot)
+    ui_logo_animated_spritesheet.png — Animated logo intro
+    ui_menu_bg.png — Main menu full background (layered)
+    ui_menu_panel.png — Menu button panel background
+    ui_btn_play.png — Play button normal state
+    ui_btn_play_hover.png
+    ui_btn_play_pressed.png
+    ui_btn_coop.png
+    ui_btn_coop_hover.png
+    ui_btn_settings.png
+    ui_btn_leaderboard.png
+    ui_btn_shop.png — Ship selection / shop
+    ui_btn_quit.png
+    ui_chicken_mascot.png — Decorative mascot chicken on menu
+    ui_chicken_mascot_wave_spritesheet.png — Animated waving
+
+Panels & Popups
+
+    ui_panel_bg.png — Generic popup/modal background
+    ui_panel_header.png — Panel header bar
+    ui_popup_border.png — Decorative popup frame/border
+    ui_gameover_bg.png — Game over screen background
+    ui_gameover_title.png — "Game Over" graphic text art
+    ui_victory_bg.png — Victory/level complete background
+    ui_victory_title.png — Victory title art
+    ui_stars_1.png / ui_stars_2.png / ui_stars_3.png — 1–3 star level rating
+    ui_paused_overlay.png — Pause screen dark overlay
+    ui_loading_screen_bg.png — Loading screen background
+    ui_loading_bar_frame.png
+    ui_loading_bar_fill.png
+    ui_leaderboard_panel.png — Leaderboard table background
+    ui_leaderboard_rank1.png — Gold #1 badge
+    ui_leaderboard_rank2.png — Silver #2
+    ui_leaderboard_rank3.png — Bronze #3
+    ui_leaderboard_myrank.png — Current player row highlight
+    ui_shop_panel.png — Ship selection shop frame
+    ui_ship_card.png — Individual ship preview card
+    ui_ship_card_locked.png — Locked ship card overlay
+    ui_ship_card_selected.png — Selected ship card border
+    ui_level_select_panel.png — Level selection screen frame
+    ui_level_node_locked.png — Locked level circle
+    ui_level_node_unlocked.png
+    ui_level_node_complete.png
+    ui_level_node_current.png — Pulsing current level marker
+    ui_biome_label_bg.png — Biome name banner (shown on level start)
+
+Icons & Buttons
+
+    icon_sound_on.png / icon_sound_off.png
+    icon_music_on.png / icon_music_off.png
+    icon_fullscreen.png
+    icon_settings_gear.png
+    icon_home.png
+    icon_retry.png
+    icon_pause.png / icon_resume.png
+    icon_close_x.png
+    icon_profile.png
+    icon_coop_player1.png / icon_coop_player2.png
+    icon_heart.png — Life/health icon small
+    icon_skull.png — Death/game over icon
+    icon_trophy.png — Leaderboard trophy
+    icon_crown.png — #1 rank crown
+    icon_lock.png
+    icon_checkmark.png
+    icon_arrow_left.png / icon_arrow_right.png — Navigation arrows
+    icon_star_full.png / icon_star_empty.png
+    icon_coin.png — Currency display icon
+
+Fonts
+
+    font_game_title.ttf / .woff2 — Sci-fi/retro display font for title
+    font_hud.ttf / .woff2 — Clean readable font for HUD numbers
+    font_arabic_support.ttf — Arabic-compatible font if localization needed
+    font_bitmap_numbers.png + .xml — Phaser bitmap font for score numbers (fast rendering)
+
+particle_star.png — Generic star particle
+particle_spark.png — Electric spark
+particle_smoke.png — Smoke puff single frame
+particle_smoke_spritesheet.png — Animated smoke
+particle_fire.png — Fire ember single
+particle_fire_spritesheet.png
+particle_blood_feather.png — Feather burst on death
+particle_ice_shard.png — Ice freeze particle
+particle_electricity.png — Electric zap particle
+particle_toxic_blob.png — Acid drip particle
+particle_shockwave.png — Radial shockwave ring
+particle_warp_trail.png — Warp speed particle trail
+particle_coin_pickup.png — Sparkle on coin collect
+particle_levelup_spritesheet.png — Level/wave cleared flash
+vfx_screen_flash.png — Full screen white flash overlay
+vfx_damage_vignette.png — Red vignette overlay on player hit
+vfx_freeze_overlay.png — Blue frost screen overlay (when frozen)
+vfx_time_slow_overlay.png — Desaturated/tint overlay for time slow
+vfx_nuke_whitefill.png — Nuke screen whiteout
+vfx_coop_join_spritesheet.png — Co-op partner join animation
+
+Player Shooting
+
+    sfx_shoot_basic.mp3 — Default pew laser shot
+    sfx_shoot_double.mp3
+    sfx_shoot_triple.mp3
+    sfx_shoot_laser_start.mp3 — Laser beam charge-up
+    sfx_shoot_laser_loop.mp3 — Continuous laser hum (looped)
+    sfx_shoot_laser_end.mp3 — Laser beam shutdown
+    sfx_shoot_missile_launch.mp3
+    sfx_shoot_missile_lock.mp3 — Missile lock-on beep
+    sfx_shoot_plasma.mp3
+    sfx_shoot_lightning.mp3
+    sfx_shoot_freeze.mp3
+    sfx_shoot_spread.mp3
+    sfx_shoot_bomb_drop.mp3
+    sfx_rapidfire_loop.mp3 — Machine gun rapid loop
+
+Explosions & Impacts
+
+    sfx_explosion_small.mp3
+    sfx_explosion_medium.mp3
+    sfx_explosion_large.mp3
+    sfx_explosion_nuke.mp3 — Massive screen-shaking boom
+    sfx_bullet_hit_enemy.mp3
+    sfx_bullet_hit_shield.mp3
+    sfx_bullet_miss.mp3
+    sfx_player_hit.mp3
+    sfx_player_death.mp3
+    sfx_shield_break.mp3
+    sfx_egg_splat.mp3 — Egg hitting player
+    sfx_ice_freeze.mp3 — Enemy/player frozen
+    sfx_chain_lightning.mp3
+
+
+sfx_enemy_cluck_1.mp3 — Random chicken cluck (variant 1)
+sfx_enemy_cluck_2.mp3
+sfx_enemy_cluck_3.mp3
+sfx_enemy_shoot_egg.mp3
+sfx_enemy_death_cluck.mp3 — Death squawk
+sfx_enemy_armored_hit.mp3 — Helmet clank
+sfx_enemy_robot_move.mp3 — Robotic servo sound
+sfx_boss_intro_roar.mp3 — Boss entry roar
+sfx_boss_attack_1.mp3
+sfx_boss_attack_2.mp3
+sfx_boss_phase_change.mp3 — Phase 2 trigger dramatic
+sfx_boss_death_long.mp3 — Extended boss death sound
+sfx_boss_laugh.mp3 — Boss taunt voice clip
+sfx_swarm_idle_loop.mp3 — Background hum of many chickens
+
+
+
+    sfx_powerup_pickup.mp3
+    sfx_powerup_shield_activate.mp3
+    sfx_powerup_shield_loop.mp3 — Active shield hum
+    sfx_powerup_invincible_activate.mp3
+    sfx_powerup_invincible_loop.mp3
+    sfx_powerup_slowtime_activate.mp3
+    sfx_powerup_slowtime_loop.mp3
+    sfx_powerup_expire_warning.mp3 — Beeping warning before powerup ends
+    sfx_powerup_expire.mp3
+    sfx_coin_pickup.mp3
+    sfx_gem_pickup.mp3
+    sfx_golden_egg_pickup.mp3
+    sfx_feather_pickup.mp3
+    sfx_health_pickup.mp3
+    sfx_magnet_attract_loop.mp3
+    sfx_xp_orb_pickup.mp3
+    sfx_levelup.mp3
+
+
+
+sfx_ui_click.mp3 — Standard button click
+sfx_ui_hover.mp3 — Button hover tick
+sfx_ui_back.mp3
+sfx_ui_confirm.mp3
+sfx_ui_cancel.mp3
+sfx_ui_error.mp3
+sfx_ui_notification.mp3
+sfx_ui_popup_open.mp3
+sfx_ui_popup_close.mp3
+sfx_ui_victory_fanfare.mp3 — Level complete jingle
+sfx_ui_gameover_sting.mp3 — Game over sound
+sfx_ui_countdown_beep.mp3 — 3-2-1 countdown tick
+sfx_ui_countdown_go.mp3 — "GO!" sound
+sfx_ui_leaderboard_scroll.mp3 — Score tally tick
+sfx_ui_rank_up.mp3 — Rank achievement
+sfx_ui_ship_select.mp3
+sfx_ui_ship_unlock.mp3
+sfx_ui_wave_start.mp3 — Wave begin announcement
+sfx_ui_boss_warning.mp3 — "WARNING" boss alert
+sfx_ui_coop_join.mp3 — Partner joins session
+sfx_ui_coop_revive.mp3 — Partner revived
+sfx_ui_coop_disconnect.mp3
+sfx_ui_combo_1.mp3 / _2.mp3 / _3.mp3 — Escalating combo sounds
+sfx_ui_highscore.mp3 — New high score achieved
+
+sfx_ambient_space_hum.mp3 — Looping space ambience
+sfx_ambient_ice_wind.mp3 — Ice biome wind loop
+sfx_ambient_lava_rumble.mp3 — Volcanic rumble loop
+sfx_ambient_storm_thunder.mp3 — Storm biome loop
+sfx_ambient_toxic_bubble.mp3 — Acid bubbling loop
+sfx_ambient_void_drone.mp3 — Deep void biome eerie hum
+sfx_warp_transition.mp3 — Between-level warp
+sfx_comet_flyby.mp3
+sfx_asteroid_break.mp3
+sfx_spaceship_engine_loop.mp3 — Player ship idle engine hum
+
+
+    music_main_menu.mp3 — Upbeat fun menu theme (loopable)
+    music_main_menu_intro.mp3 — One-shot intro before the loop
+    music_level_space.mp3 — Space biome level music (loopable)
+    music_level_ice.mp3 — Ice biome level music
+    music_level_lava.mp3 — Lava biome — intense, heavy
+    music_level_storm.mp3 — Storm biome — fast, electric
+    music_level_toxic.mp3 — Toxic biome — groovy, dark
+    music_level_void.mp3 — Void biome — eerie, slow build
+    music_boss_battle.mp3 — Generic intense boss theme
+    music_boss_battle_phase2.mp3 — Ramped up boss phase 2
+    music_final_boss.mp3 — Final boss epic theme
+    music_final_boss_phase3.mp3 — Last stand desperate phase
+    music_victory.mp3 — Level complete short jingle
+    music_gameover.mp3 — Game over short track
+    music_leaderboard.mp3 — Chill leaderboard/score screen
+    music_shop_select.mp3 — Ship selection screen
+    music_coop_lobby.mp3 — Waiting for co-op partner screen
+    music_credits.mp3 — End credits theme
+
+Provide both MP3 (broad compatibility) and OGG (smaller size for web). Phaser.js loads whichever the browser supports.
+
+All music loops should be seamlessly loopable. Use Audacity or similar to trim loop points carefully.
+
+atlas_player_ships.json + .png — All ship frames packed
+atlas_enemies.json + .png — All enemy frames packed
+atlas_bosses.json + .png — All boss frames (large atlas)
+atlas_projectiles.json + .png
+atlas_explosions.json + .png
+atlas_powerups.json + .png
+atlas_ui.json + .png — All UI elements packed
+atlas_particles.json + .png
+atlas_collectables.json + .png
+animations.json — Phaser animation definitions (key, frames, frameRate, repeat)
+
+levels.json — Level definitions: biome, wave count, enemy spawn tables, boss reference
+enemies.json — Enemy stats: HP, speed, damage, score, drop table, sprite key
+bosses.json — Boss stats, phase thresholds, attack patterns, loot
+ships.json — Ship stats: speed, HP, fireRate, weapon, price, unlock condition
+weapons.json — Weapon definitions: damage, speed, spread, cooldown, sprite key, sfx key
+powerups.json — Powerup definitions: type, duration, value, sprite key, sfx key
+waves.json — Wave spawn patterns: formation, timing, enemy type reference
+biomes.json — Biome configs: background layers, ambient sfx, music key, enemy pool
+collectables.json — Drop definitions: type, value, spawn weight
+audio_manifest.json — All audio file paths and loop points for Phaser loader
+asset_manifest.json — Complete asset preload list for Phaser preloader scene

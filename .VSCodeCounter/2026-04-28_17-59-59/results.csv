@@ -1,0 +1,29 @@
+"filename", "language", "JavaScript", "JSON", "JSON with Comments", "comment", "blank", "total"
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/Utils/Constants.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/Utils/Math.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/biomes/Ice.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/biomes/Lava.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/biomes/Space.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/Config.json", "JSON with Comments", 0, 0, 8, 0, 1, 9
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/bosses.json", "JSON", 0, 47, 0, 0, 0, 47
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/enemies.json", "JSON", 0, 38, 0, 0, 0, 38
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/ships.json", "JSON", 0, 23, 0, 0, 0, 23
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/bosses/Boss.js", "JavaScript", 36, 0, 0, 7, 11, 54
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/bullets/Bullet.js", "JavaScript", 28, 0, 0, 0, 5, 33
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/enemies/Enemy.js", "JavaScript", 67, 0, 0, 3, 16, 86
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/player/Player.js", "JavaScript", 67, 0, 0, 12, 21, 100
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/powerups/Powerup.js", "JavaScript", 35, 0, 0, 4, 8, 47
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Endless.js", "JavaScript", 112, 0, 0, 9, 22, 143
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level1.js", "JavaScript", 266, 0, 0, 37, 65, 368
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level2.js", "JavaScript", 268, 0, 0, 31, 64, 363
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/BootScene.js", "JavaScript", 11, 0, 0, 4, 3, 18
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/GameScene.js", "JavaScript", 26, 0, 0, 4, 4, 34
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/MenuScene.js", "JavaScript", 125, 0, 0, 16, 37, 178
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/PreloadScene.js", "JavaScript", 85, 0, 0, 7, 20, 112
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/UIScene.js", "JavaScript", 50, 0, 0, 5, 11, 66
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/AudioSystem.js", "JavaScript", 0, 0, 0, 0, 1, 1
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/CombatSystem.js", "JavaScript", 12, 0, 0, 2, 3, 17
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/LevelSystem.js", "JavaScript", 43, 0, 0, 3, 12, 58
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/PowerupSystem.js", "JavaScript", 176, 0, 0, 19, 31, 226
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/SpawnSystem.js", "JavaScript", 32, 0, 0, 5, 8, 45
+"Total", "-", 1439, 108, 8, 168, 348, 2071
