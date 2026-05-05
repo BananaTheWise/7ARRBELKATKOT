@@ -30,31 +30,35 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('player5',   'assets/imgs/ships/player5.png');
  
         // ── Enemies ───────────────────────────────────────────────────────
-        this.load.image('enemy',    'assets/imgs/enemies/Enemy.png');
+        this.load.image('enemy',    'assets/imgs/enemies/enemy_normal.png');
         this.load.image('enemy_basic',    'assets/imgs/enemies/enemy_basic.png');
         this.load.image('enemy_shooter',    'assets/imgs/enemies/enemy_shooter.png');
         this.load.image('enemy_tank',    'assets/imgs/enemies/enemy_tank.png');
         this.load.image('enemy_zigzag',    'assets/imgs/enemies/enemy_zigzag.png');
-        this.load.image('boss1',    'assets/imgs/bosses/EndlessBoss.png');
-        this.load.image('boss2',     'assets/imgs/bosses/EndlessBoss.png');
+        this.load.image('boss1',    'assets/imgs/bosses/EndlessBoss1.png');
+        this.load.image('boss2',     'assets/imgs/bosses/EndlessBoss2.png');
         // ── Enemies ICE ────────────────────────────────────────────────────
-        this.load.image('enemy_ice',    'assets/imgs/enemies/Enemy.png');
-        this.load.image('enemy_basic_ice',    'assets/imgs/enemies/enemy_basic.png');
-        this.load.image('enemy_shooter_ice',    'assets/imgs/enemies/enemy_shooter.png');
-        this.load.image('enemy_tank_ice',    'assets/imgs/enemies/enemy_tank.png');
-        this.load.image('enemy_zigzag_ice',    'assets/imgs/enemies/enemy_zigzag.png');
+        this.load.image('enemy_level1',    'assets/imgs/enemies/icyenemy_normal.png');
+        this.load.image('enemy_basic_level1',    'assets/imgs/enemies/icyenemy_basic.png');
+        this.load.image('enemy_shooter_level1',    'assets/imgs/enemies/icyenemy_shooter.png');
+        this.load.image('enemy_tank_level1',    'assets/imgs/enemies/icyenemy_tank.png');
+        this.load.image('enemy_zigzag_level1',    'assets/imgs/enemies/icyenemy_zigzag.png');
+        this.load.image('boss_level1',     'assets/imgs/bosses/BossLevel2.png');
+        this.load.image('bg_level1',  'assets/imgs/backgrounds/background12.png');
         // ── Enemies LAVA ───────────────────────────────────────────────────
-        this.load.image('enemy_lava',    'assets/imgs/enemies/Enemy.png');
-        this.load.image('enemy_basic_lava',    'assets/imgs/enemies/enemy_basic.png');
-        this.load.image('enemy_shooter_lava',    'assets/imgs/enemies/enemy_shooter.png');
-        this.load.image('enemy_tank_lava',    'assets/imgs/enemies/enemy_tank.png');
-        this.load.image('enemy_zigzag_lava',    'assets/imgs/enemies/enemy_zigzag.png');
+        this.load.image('enemy_level2',    'assets/imgs/enemies/lavaenemy_normal.png');
+        this.load.image('enemy_basic_level2',    'assets/imgs/enemies/lavaenemy_basic.png');
+        this.load.image('enemy_shooter_level2',    'assets/imgs/enemies/lavaenemy_shooter.png');
+        this.load.image('enemy_tank_level2',    'assets/imgs/enemies/lavaenemy_tank.png');
+        this.load.image('enemy_zigzag_level2',    'assets/imgs/enemies/lavaenemy_zigzag.png');
+        this.load.image('boss_level2',     'assets/imgs/bosses/BossLevel2.png');
+        this.load.image('bg_level2',  'assets/imgs/backgrounds/backgroundlava.png');
         
  
         // ── Bullets ───────────────────────────────────────────────────────
-        this.load.image('bullet_player', 'assets/imgs/bullets/Endless/BulletSmall.png');
-        this.load.image('bullet_enemy',  'assets/imgs/bullets/Endless/BulletSmall.png');
-        this.load.image('bullet_boss',   'assets/imgs/bullets/Endless/BulletSmall.png');
+        this.load.image('bullet_player', 'assets/imgs/bullets/BulletSmall.png');
+        this.load.image('bullet_enemy',  'assets/imgs/bullets/rocket.png');
+        this.load.image('bullet_boss',   'assets/imgs/bullets/BulletLava.png');
  
         // ── Backgrounds ───────────────────────────────────────────────────
         this.load.image('menu_bg',  'assets/imgs/backgrounds/MainMenu.png');
@@ -80,6 +84,20 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.audio('shoot',     'assets/sounds/sfx/shoot.wav');
         this.load.audio('explosion', 'assets/sounds/sfx/explosion.wav');
         
+
+        // Background music — one per scene
+        this.load.audio('music_menu',    'assets/sounds/music/menu.mp3');
+        this.load.audio('music_game',    'assets/sounds/music/game.mp3');
+        this.load.audio('music_level1',  'assets/sounds/music/level1.mp3');
+        this.load.audio('music_level2',  'assets/sounds/music/level2.mp3');
+
+        // SFX
+        this.load.audio('shoot',           'assets/sounds/sfx/shoot.wav');
+        this.load.audio('explosion',       'assets/sounds/sfx/explosion.wav');
+        this.load.audio('powerup_collect', 'assets/sounds/sfx/powerup.wav');
+        this.load.audio('boss_dead',       'assets/sounds/sfx/boss_dead.wav');
+        this.load.audio('level_up',        'assets/sounds/sfx/level_up.wav');
+
         // ── Difficulties ──────────────────────────────────────────────────
         this.load.image('easy', 'assets/imgs/easy.png');
         this.load.image('medium', 'assets/imgs/medium.png');
@@ -87,9 +105,6 @@ export default class PreloadScene extends Phaser.Scene {
 
         this.load.image('money_icon', 'assets/imgs/money.png');
 
-        // --- Audio ---
-        this.load.audio('shoot', 'assets/sounds/sfx/shoot.wav');
-        this.load.audio('explosionSound', 'assets/sounds/sfx/explosion.wav');
     }
 
     create() {

@@ -1,47 +1,30 @@
-// game/scenes/Level2Scene.js
-import Player       from '../entities/player/Player.js';
-import Bullet       from '../entities/bullets/Bullet.js';
-import Enemy        from '../entities/enemies/Enemy.js';
-import Boss         from '../entities/bosses/Boss.js';
+// game/levels/Level2.js
+import Player        from '../entities/player/Player.js';
+import Bullet        from '../entities/bullets/Bullet.js';
+import Enemy         from '../entities/enemies/Enemy.js';
+import Boss          from '../entities/bosses/Boss.js';
+import CombatSystem  from '../systems/CombatSystem.js';
 import PowerupSystem from '../systems/PowerupSystem.js';
-import CombatSystem from '../systems/CombatSystem.js';
+import PlayerData    from '../data/PlayerData.js';
 
-// ── Wave definitions ──────────────────────────────────────────────────────────
-// Level 2 is noticeably harder than Level 1:
-// - More enemies per wave
-// - Shooters appear earlier
-// - Later waves mix all types in large numbers
+const HUD_H = 60;
+
 const WAVES = [
-    // Wave 1 — starts where Level 1 left off, no easing in
     ['basic', 'zigzagger', 'basic', 'zigzagger'],
-
-    // Wave 2 — shooters from the start
     ['shooter', 'basic', 'basic', 'zigzagger', 'zigzagger'],
-
-    // Wave 3 — waver swarm
     ['waver', 'waver', 'waver', 'shooter', 'basic'],
-
-    // Wave 4 — double shooters + support
     ['shooter', 'shooter', 'zigzagger', 'waver', 'basic', 'basic'],
-
-    // Wave 5 — heavy mixed wave
     ['shooter', 'waver', 'zigzagger', 'shooter', 'waver', 'zigzagger'],
-
-    // Wave 6 — relentless pressure
     ['shooter', 'shooter', 'shooter', 'zigzagger', 'waver', 'waver', 'basic'],
-
-    // Wave 7 — final rush before boss, largest wave
     ['shooter', 'shooter', 'zigzagger', 'zigzagger', 'waver', 'waver', 'basic', 'shooter', 'zigzagger'],
 ];
 
-export default class Level2Scene extends Phaser.Scene {
+export default class Level2 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level2Scene' });
     }
 
     create() {
-        console.log("Level2Scene Started");
-
         this.score       = 0;
         this.health      = 100;
         this.currentWave = 0;
@@ -49,172 +32,123 @@ export default class Level2Scene extends Phaser.Scene {
         this.bossSpawned = false;
         this.levelDone   = false;
 
-        // ── Background ────────────────────────────────────────────────────
-        this.bg = this.add.tileSprite(
-            0, 0,
-            this.scale.width, this.scale.height,
-            'game_bg'
-        ).setOrigin(0);
+        const W = this.scale.width;
+        const H = this.scale.height;
 
-        // ── Player config — slightly tougher to play, same speed ──────────
-        this.playerSpeed  = 300;
-        this.fireCooldown = 250;
-        this.playerHealth = 100;
+        this.cameras.main.setViewport(0, HUD_H, W, H - HUD_H);
 
-        // ── Groups ────────────────────────────────────────────────────────
-        this.playerBullets = this.physics.add.group({
-            classType:      Bullet,
-            maxSize:        50,
-            runChildUpdate: true,
-        });
+        // Level 2 specific background
+        this.bg = this.add.tileSprite(0, 0, W, H, 'bg_level2').setOrigin(0);
 
-        this.enemies = this.physics.add.group({
-            runChildUpdate: true,
-        });
+        const shipsData  = this.cache.json.get('shipsData');
+        const shipConfig = shipsData?.[PlayerData.getSelectedShip()] || Object.values(shipsData)[0];
 
-        this.enemyBullets = this.physics.add.group({
-            classType:      Bullet,
-            maxSize:        50,
-            runChildUpdate: true,
-        });
+        this.playerSpeed         = shipConfig.speed;
+        this.fireCooldown        = shipConfig.fireRate;
+        this.playerHealth        = shipConfig.health;
+        this.playerDamage        = shipConfig.damage;
+        this.playerBulletTexture = shipConfig.bulletTexture || 'bullet_player';
 
-        // ── Player ────────────────────────────────────────────────────────
-        this.player = new Player(
-            this,
-            100,
-            this.scale.height / 2,
-            this.playerBullets
-        );
+        this.playerBullets = this.physics.add.group({ classType: Bullet, maxSize: 50, runChildUpdate: true });
+        this.enemies       = this.physics.add.group({ runChildUpdate: true });
+        this.enemyBullets  = this.physics.add.group({ classType: Bullet, maxSize: 50, runChildUpdate: true });
 
-        this.player.on('damaged', (hp) => {
-            this.health = hp;
-            this.registry.events.emit('update-health', hp);
-        });
+        this.player = new Player(this, 100, (H - HUD_H) / 2, this.playerBullets);
+        this.player.setTexture(shipConfig.texture || 'player');
 
-        this.player.on('shield-changed', (shield) => {
-            this.registry.events.emit('update-shield', shield);
-        });
+        this.player.on('damaged',        hp => { this.health = hp; this.registry.events.emit('update-health', hp); });
+        this.player.on('shield-changed', s  => { this.registry.events.emit('update-shield', s); });
+        this.player.on('dead',           () => { this.registry.events.emit('game-over'); this.endGame('dead'); });
 
-        this.player.on('dead', () => {
-            this.registry.events.emit('game-over');
-            this.time.delayedCall(1500, () => {
-                this.scene.stop('Level2Scene');
-                this.scene.stop('UIScene');
-                this.scene.start('MenuScene');
-            });
-        });
-
-        // ── Combat system ─────────────────────────────────────────────────
-        this.combatSystem = new CombatSystem(this);
+        this.combatSystem  = new CombatSystem(this);
         this.powerupSystem = new PowerupSystem(this);
 
-        // ── Overlaps ──────────────────────────────────────────────────────
-        this.physics.add.overlap(
-            this.playerBullets,
-            this.enemies,
-            this.combatSystem.handleBulletHitEnemy,
-            null,
-            this.combatSystem
-        );
+        const playerRef = this.player;
 
-        this.physics.add.overlap(
-            this.enemyBullets,
-            this.player,
-            (bullet, player) => {
+        this.physics.add.overlap(this.playerBullets, this.enemies, this.combatSystem.handleBulletHitEnemy, null, this.combatSystem);
+
+        this.physics.add.overlap(this.enemyBullets, playerRef,
+            (a, b) => {
+                const bullet = (a instanceof Bullet) ? a : b;
                 bullet.setActive(false).setVisible(false);
                 bullet.body.enable = false;
-                player.takeDamage(10);
+                playerRef.takeDamage(bullet.damage || 10);
             },
-            (bullet, player) => player.active && !player.isDead
+            () => playerRef.active && !playerRef.isDead
         );
 
-        this.physics.add.overlap(
-            this.enemies,
-            this.player,
-            (enemy, player) => {
-                if (!enemy.active || !player.active || player.isDead) return;
+        this.physics.add.overlap(this.enemies, playerRef,
+            (a, b) => {
+                if (!playerRef.active || playerRef.isDead) return;
+                const enemy = (a === playerRef) ? b : a;
+                if (!enemy.active) return;
+                this.onEnemyKilled(enemy, true);
                 enemy.destroy();
-                player.takeDamage(20);
+                playerRef.takeDamage(20);
             },
-            (enemy, player) => player.active && !player.isDead
+            () => playerRef.active && !playerRef.isDead
         );
 
-        // ── Wave label ────────────────────────────────────────────────────
-        this.waveText = this.add.text(
-            this.scale.width / 2, 80,
-            '', {
-                fontSize:        '36px',
-                color:           '#ffffff',
-                fontStyle:       'bold',
-                stroke:          '#000000',
-                strokeThickness: 4,
-            }
-        ).setOrigin(0.5).setAlpha(0);
+        this.waveText = this.add.text(W / 2, 40, '', {
+            fontSize: '36px', color: '#ffffff', fontStyle: 'bold',
+            stroke: '#000000', strokeThickness: 4,
+        }).setOrigin(0.5).setAlpha(0);
 
-        // ── HUD reset ─────────────────────────────────────────────────────
-        this.registry.events.emit('update-score',  this.score);
-        this.registry.events.emit('update-health', this.health);
+        this.registry.events.emit('update-max-health', this.playerHealth);
+        this.registry.events.emit('update-score',      0);
+        this.registry.events.emit('update-health',     this.playerHealth);
+        this.registry.events.emit('update-shield',     0);
 
-        // ── Start first wave ──────────────────────────────────────────────
         this.time.delayedCall(1000, () => this.startNextWave());
     }
 
-    // ── Wave management ───────────────────────────────────────────────────
-
     startNextWave() {
         if (this.levelDone) return;
+        if (this.currentWave >= WAVES.length) { this.spawnBoss(); return; }
 
-        if (this.currentWave >= WAVES.length) {
-            this.spawnBoss();
-            return;
-        }
-
-        const waveIndex  = this.currentWave;
-        const waveNumber = waveIndex + 1;
-        const enemyKeys  = WAVES[waveIndex];
-
+        const keys = WAVES[this.currentWave];
         this.waveActive = true;
         this.currentWave++;
+        this.showWaveLabel(`Wave ${this.currentWave} / 7`);
 
-        this.showWaveLabel(`Wave ${waveNumber} / 7`);
-
-        // Spawn enemies with tighter 400ms gap (faster than Level 1's 600ms)
-        enemyKeys.forEach((key, i) => {
+        keys.forEach((key, i) => {
             this.time.delayedCall(i * 400, () => {
                 if (!this.player?.active) return;
                 this.spawnEnemy(key);
             });
         });
 
-        // Poll for wave clear
-        this.time.addEvent({
-            delay:    500,
-            loop:     true,
-            callback: () => {
-                if (this.levelDone || !this.waveActive) return;
-
-                if (this.enemies.countActive(true) === 0) {
-                    this.waveActive = false;
-                    this.time.delayedCall(1200, () => {
-                        if (this.player?.active) this.startNextWave();
-                    });
-                }
-            },
-        });
+        this.time.addEvent({ delay: 500, loop: true, callback: () => {
+            if (this.levelDone || !this.waveActive) return;
+            if (this.enemies.countActive(true) === 0) {
+                this.waveActive = false;
+                this.time.delayedCall(1200, () => { if (this.player?.active) this.startNextWave(); });
+            }
+        }});
     }
 
     spawnEnemy(key) {
-        const enemiesData = this.cache.json.get('enemiesData');
-        const config      = enemiesData[key];
+        const base = this.cache.json.get('enemiesData')[key];
+        if (!base) return;
 
-        if (!config) {
-            console.warn("Unknown enemy key:", key);
-            return;
-        }
+        const textureMap = {
+            basic:     'enemy_basic_level2',
+            zigzagger: 'enemy_zigzag_level2',
+            waver:     'enemy_basic_level2',
+            shooter:   'enemy_shooter_level2',
+            tank:      'enemy_tank_level2',
+        };
 
-        const x = this.game.config.width + 50;
-        const y = Phaser.Math.Between(60, this.scale.height - 60);
+        const config = {
+            ...base,
+            key:    textureMap[key] || 'enemy_level2',
+            hp:     Math.ceil(base.hp    * 1.3),
+            speed:  Math.ceil(base.speed * 1.2),
+            damage: Math.ceil(base.damage * 1.2),
+        };
 
+        const x     = this.game.config.width + 50;
+        const y     = Phaser.Math.Between(60, this.scale.height - 60);
         const enemy = new Enemy(this, x, y, config, this.enemyBullets);
         this.enemies.add(enemy);
         enemy.applyVelocity();
@@ -225,143 +159,77 @@ export default class Level2Scene extends Phaser.Scene {
         this.showWaveLabel('⚠ BOSS ⚠');
 
         const bossesData = this.cache.json.get('bossesData');
-        const keys       = Object.keys(bossesData);
-        const randomKey  = Phaser.Utils.Array.GetRandom(keys);
-        const config     = bossesData[randomKey];
+        const baseConfig = bossesData[Phaser.Utils.Array.GetRandom(Object.keys(bossesData))];
 
-        // Level 2 boss is beefier — bump hp and speed
-        const hardConfig = {
-            ...config,
-            hp:    Math.floor(config.hp * 1.5),
-            speed: Math.floor(config.speed * 1.3),
+        const config = {
+            ...baseConfig,
+            key:   'boss_level2',
+            hp:    Math.floor(baseConfig.hp    * 1.5),
+            speed: Math.floor(baseConfig.speed * 1.3),
         };
 
-        console.log("Level 2 boss:", randomKey, hardConfig);
-
-        const boss = new Boss(
-            this,
-            this.game.config.width + 50,
-            this.scale.height / 2,
-            hardConfig,
-            this.enemyBullets
-        );
-
+        const boss = new Boss(this, this.game.config.width + 50, this.scale.height / 2, config, this.enemyBullets);
         this.enemies.add(boss);
         boss.applyVelocity();
 
-        // Poll for boss death
-        this.time.addEvent({
-            delay:    300,
-            loop:     true,
-            callback: () => {
-                if (this.levelDone) return;
-                if (this.enemies.countActive(true) === 0 && this.bossSpawned) {
-                    this.onLevelComplete();
-                }
-            },
-        });
+        this.time.addEvent({ delay: 300, loop: true, callback: () => {
+            if (this.levelDone) return;
+            if (this.enemies.countActive(true) === 0 && this.bossSpawned) this.onLevelComplete();
+        }});
     }
-
-    // ── Level complete ────────────────────────────────────────────────────
 
     onLevelComplete() {
         if (this.levelDone) return;
         this.levelDone = true;
-
-        console.log("Level 2 Complete!");
         this.registry.events.emit('game-win');
-
-        if (this.player?.active) {
-            this.player.isDead = true;
-        }
-
+        if (this.player?.active) this.player.isDead = true;
         this.time.delayedCall(1500, () => this.showScoreScreen());
     }
 
     showScoreScreen() {
-        // Dim overlay
-        this.add.rectangle(
-            0, 0,
-            this.scale.width, this.scale.height,
-            0x000000, 0.75
-        ).setOrigin(0);
-
-        this.add.text(this.scale.width / 2, 180, 'LEVEL 2 COMPLETE', {
-            fontSize:        '52px',
-            color:           '#ffdd00',
-            fontStyle:       'bold',
-            stroke:          '#000000',
-            strokeThickness: 6,
-        }).setOrigin(0.5);
-
-        this.add.text(this.scale.width / 2, 300, `Score: ${this.score}`, {
-            fontSize:        '38px',
-            color:           '#ffffff',
-            stroke:          '#000000',
-            strokeThickness: 4,
-        }).setOrigin(0.5);
-
+        const W = this.scale.width, H = this.scale.height;
+        const earned      = Math.floor(this.score / 10);
         const healthBonus = this.health * 2;
-        this.add.text(this.scale.width / 2, 370, `Health Bonus: +${healthBonus}`, {
-            fontSize:        '28px',
-            color:           '#aaffaa',
-            stroke:          '#000000',
-            strokeThickness: 3,
-        }).setOrigin(0.5);
+        PlayerData.addMoney(earned);
 
-        const total = this.score + healthBonus;
-        this.add.text(this.scale.width / 2, 440, `Total: ${total}`, {
-            fontSize:        '42px',
-            color:           '#ffdd00',
-            fontStyle:       'bold',
-            stroke:          '#000000',
-            strokeThickness: 5,
-        }).setOrigin(0.5);
+        this.add.rectangle(0, 0, W, H, 0x000000, 0.8).setOrigin(0).setDepth(90);
+        this.add.text(W/2, H/2-160, 'LEVEL 2 COMPLETE', { fontSize: '48px', color: '#ffdd00', fontStyle: 'bold', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(91);
+        this.add.text(W/2, H/2-80,  `Score: ${this.score}`,             { fontSize: '30px', color: '#fff' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W/2, H/2-30,  `Health Bonus: +${healthBonus}`,    { fontSize: '22px', color: '#aaffaa' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W/2, H/2+20,  `Total: ${this.score+healthBonus}`, { fontSize: '36px', color: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W/2, H/2+65,  `💰 +${earned} coins`,              { fontSize: '24px', color: '#ffdd00' }).setOrigin(0.5).setDepth(91);
 
-        const btn = this.add.text(this.scale.width / 2, 560, '[ Main Menu ]', {
-            fontSize:        '32px',
-            color:           '#ffffff',
-            stroke:          '#000000',
-            strokeThickness: 3,
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-        btn.on('pointerover', () => btn.setStyle({ color: '#ffff00' }));
-        btn.on('pointerout',  () => btn.setStyle({ color: '#ffffff' }));
-        btn.on('pointerdown', () => {
-            this.scene.stop('Level2Scene');
-            this.scene.stop('UIScene');
-            this.scene.start('MenuScene');
-        });
+        const btn = this.add.text(W/2, H/2+135, '[ Main Menu ]', {
+            fontSize: '28px', color: '#fff', backgroundColor: '#222', padding: { x: 20, y: 8 },
+        }).setOrigin(0.5).setDepth(91).setInteractive({ useHandCursor: true });
+        btn.on('pointerover',  () => btn.setStyle({ color: '#ffff00' }));
+        btn.on('pointerout',   () => btn.setStyle({ color: '#ffffff' }));
+        btn.on('pointerdown',  () => { this.scene.stop('Level2Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────
+    endGame(reason) {
+        if (this.levelDone) return;
+        this.levelDone = true;
+        try { this.powerupSystem?.destroy(); } catch(e) {}
+        PlayerData.addMoney(Math.floor(this.score / 10));
+        this.time.delayedCall(100, () => { this.scene.stop('Level2Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
+    }
 
     showWaveLabel(text) {
         this.waveText.setText(text).setAlpha(1);
-        this.tweens.add({
-            targets:  this.waveText,
-            alpha:    0,
-            delay:    1500,
-            duration: 800,
-        });
+        this.tweens.add({ targets: this.waveText, alpha: 0, delay: 1500, duration: 800 });
     }
 
-    onEnemyKilled(enemy) {
-        this.score += enemy.scoreValue || 10;
+    onEnemyKilled(enemy, isCrash = false) {
+        this.score += (enemy.scoreValue || 10) + (isCrash ? 25 : 0);
         this.registry.events.emit('update-score', this.score);
+        this.powerupSystem?.onEnemyKilled(enemy.x, enemy.y);
     }
 
-    onBossKilled() {
-        this.registry.events.emit('game-win');
-    }
-
-    // ── Game loop ─────────────────────────────────────────────────────────
+    onBossKilled() { this.registry.events.emit('game-win'); }
 
     update(time, delta) {
         this.bg.tilePositionX += 1;
-
-        if (this.player?.active) {
-            this.player.update(time, delta);
-        }
+        if (this.player?.active) this.player.update(time, delta);
     }
 }

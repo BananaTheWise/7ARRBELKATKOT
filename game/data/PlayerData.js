@@ -1,10 +1,10 @@
 // game/data/PlayerData.js
-// Persistent player progress with named save slots.
-// Slot 'auto' is always used during gameplay.
-// Players can save to slot 1/2/3 from the menu.
+// Persistent player progress.
+// Auto-save uses localStorage (fast, automatic).
+// Manual save downloads a .json file to the user's computer.
+// Manual load reads a .json file the user picks from their computer.
 
-const SAVE_PREFIX = 'space_shooter_v1_';
-const AUTO_SLOT   = 'auto';
+const LS_KEY = 'space_shooter_v1_auto';
 
 const DEFAULT = {
     money:        0,
@@ -16,10 +16,10 @@ const DEFAULT = {
 
 export default class PlayerData {
 
-    // ── Core ──────────────────────────────────────────────────────────────
-    static load(slot = AUTO_SLOT) {
+    // ── Auto save / load (localStorage) ──────────────────────────────────
+    static load() {
         try {
-            const raw = localStorage.getItem(SAVE_PREFIX + slot);
+            const raw = localStorage.getItem(LS_KEY);
             if (!raw) return { ...DEFAULT };
             return { ...DEFAULT, ...JSON.parse(raw) };
         } catch(e) {
@@ -28,50 +28,95 @@ export default class PlayerData {
         }
     }
 
-    static save(data, slot = AUTO_SLOT) {
+    static save(data) {
         try {
             data.lastSaved = new Date().toISOString();
-            localStorage.setItem(SAVE_PREFIX + slot, JSON.stringify(data));
-            console.log("Saved to slot:", slot);
+            localStorage.setItem(LS_KEY, JSON.stringify(data));
         } catch(e) {
             console.warn("PlayerData.save failed:", e);
         }
     }
 
-    // Copy auto slot into a named slot
-    static saveToSlot(slot) {
-        const data = PlayerData.load(AUTO_SLOT);
-        PlayerData.save(data, slot);
-        return data;
+    // ── File save — downloads a .json file to the user's computer ─────────
+    // Call this from the menu Save button.
+    // Returns the filename used.
+    static saveToFile() {
+        const data     = PlayerData.load();
+        data.lastSaved = new Date().toISOString();
+        data.version   = 1;
+
+        const json     = JSON.stringify(data, null, 2);
+        const blob     = new Blob([json], { type: 'application/json' });
+        const url      = URL.createObjectURL(blob);
+
+        // Create a temporary link and click it to trigger download
+        const date     = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const filename = `space_shooter_save_${date}.json`;
+
+        const a        = document.createElement('a');
+        a.href         = url;
+        a.download     = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        console.log("Save file downloaded:", filename);
+        return filename;
     }
 
-    // Load named slot into auto slot
-    static loadFromSlot(slot) {
-        const data = PlayerData.load(slot);
-        if (!data.lastSaved) return null; // slot is empty
-        PlayerData.save(data, AUTO_SLOT);
-        return data;
-    }
+    // ── File load — opens a file picker, reads the .json ─────────────────
+    // Call this from the menu Load button.
+    // Returns a Promise that resolves with the loaded data, or null on cancel.
+    static loadFromFile() {
+        return new Promise((resolve) => {
+            const input    = document.createElement('input');
+            input.type     = 'file';
+            input.accept   = '.json';
+            input.style.display = 'none';
 
-    static getSlotInfo(slot) {
-        try {
-            const raw = localStorage.getItem(SAVE_PREFIX + slot);
-            if (!raw) return null;
-            const data = JSON.parse(raw);
-            return {
-                slot,
-                money:     data.money     || 0,
-                highscore: data.highscore || 0,
-                ship:      data.selectedShip || 'ship_01',
-                lastSaved: data.lastSaved || null,
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) { resolve(null); return; }
+
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+
+                        // Validate it's a real save file
+                        if (!data.ownedShips || !Array.isArray(data.ownedShips)) {
+                            console.warn("Invalid save file");
+                            resolve(null);
+                            return;
+                        }
+
+                        // Merge with defaults so missing fields are filled
+                        const merged = { ...DEFAULT, ...data };
+
+                        // Write to localStorage so the game uses it immediately
+                        PlayerData.save(merged);
+
+                        console.log("Save file loaded:", file.name);
+                        resolve(merged);
+                    } catch(err) {
+                        console.warn("Failed to parse save file:", err);
+                        resolve(null);
+                    }
+                };
+
+                reader.readAsText(file);
+                document.body.removeChild(input);
             };
-        } catch(e) {
-            return null;
-        }
-    }
 
-    static deleteSlot(slot) {
-        localStorage.removeItem(SAVE_PREFIX + slot);
+            input.oncancel = () => {
+                document.body.removeChild(input);
+                resolve(null);
+            };
+
+            document.body.appendChild(input);
+            input.click();
+        });
     }
 
     // ── Money ─────────────────────────────────────────────────────────────
@@ -83,6 +128,7 @@ export default class PlayerData {
         const data  = PlayerData.load();
         data.money  = (data.money || 0) + Math.floor(amount);
         PlayerData.save(data);
+        console.log(`+${Math.floor(amount)} coins → total: ${data.money}`);
         return data.money;
     }
 
@@ -140,7 +186,7 @@ export default class PlayerData {
 
     // ── Debug ─────────────────────────────────────────────────────────────
     static reset() {
-        ['auto','1','2','3'].forEach(s => localStorage.removeItem(SAVE_PREFIX + s));
-        console.log("All save data cleared");
+        localStorage.removeItem(LS_KEY);
+        console.log("Save data cleared");
     }
 }
