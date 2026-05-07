@@ -9,10 +9,14 @@ import PlayerData    from '../data/PlayerData.js';
 import AudioSystem   from '../systems/AudioSystem.js';
 
 const HUD_H = 60;
+const KC    = Phaser.Input.Keyboard.KeyCodes;
+
+// P1: WASD + Space   P2: Arrows + Enter
+const P1_CONTROLS = { up: KC.W,    down: KC.S,    left: KC.A,    right: KC.D,     fire: KC.SPACE };
+const P2_CONTROLS = { up: KC.UP,   down: KC.DOWN, left: KC.LEFT, right: KC.RIGHT, fire: KC.ENTER };
 
 export default class EndlessBase extends Phaser.Scene {
 
-    // Subclasses override this to set difficulty numbers
     getDifficultyConfig() {
         return {
             label:             'Easy',
@@ -21,24 +25,28 @@ export default class EndlessBase extends Phaser.Scene {
             crashBonus:        25,
             baseScorePerSec:   2,
             scalePerLevel:     1,
-            spawnInterval:     2000,
-            spawnIntervalMin:  800,
-            spawnIntervalStep: 150,
-            enemySpeedMult:    1.0,
-            enemyHpMult:       1.0,
-            enemyDamageMult:   1.0,
-            enemyFireRateMult: 1.0,
-            bossHpMult:        1.0,
-            bossSpeedMult:     1.0,
-            maxEnemies:        20,
-            powerupDropChance: 0.30,
+            spawnInterval:     2500,
+            spawnIntervalMin:  1200,
+            spawnIntervalStep: 100,
+            enemySpeedMult:    0.75,
+            enemyHpMult:       0.75,
+            enemyDamageMult:   0.75,
+            enemyFireRateMult: 1.5,
+            bossHpMult:        0.7,
+            bossSpeedMult:     0.8,
+            maxEnemies:        15,
+            powerupDropChance: 0.40,
         };
+    }
+
+    // Called from GameScene with { mode, coop }
+    init(data) {
+        this.isCoop = data?.coop === true;
     }
 
     create() {
         this.cfg        = this.getDifficultyConfig();
         this.score      = 0;
-        this.health     = 100;
         this.level      = 1;
         this.scoreTimer = 0;
         this.gameEnded  = false;
@@ -49,15 +57,20 @@ export default class EndlessBase extends Phaser.Scene {
         this.cameras.main.setViewport(0, HUD_H, W, H - HUD_H);
         this.bg = this.add.tileSprite(0, 0, W, H, 'game_bg').setOrigin(0);
 
-        // Difficulty watermark top-right
-        this.add.text(W - 14, 8, this.cfg.label.toUpperCase(), {
+        // Difficulty watermark
+        this.add.text(W - 14, 8,
+            this.cfg.label.toUpperCase() + (this.isCoop ? ' · CO-OP' : ''), {
             fontSize: '12px', color: this.cfg.color,
         }).setOrigin(1, 0).setAlpha(0.5);
 
-        // Ship stats
-        const shipsData   = this.cache.json.get('shipsData');
-        const selectedKey = PlayerData.getSelectedShip();
-        const shipConfig  = shipsData?.[selectedKey] || Object.values(shipsData)[0];
+        // ── Ship stats & Setup ──────────────────────────────────────────
+        const shipsData    = this.cache.json.get('shipsData');
+        const rawSelection = PlayerData.getSelectedShip();
+        const shipConfig   = shipsData?.[rawSelection] || Object.values(shipsData)[0];
+        
+        // This is the string ('player', 'ship2', 'ship3', etc.)
+        const shipTexture  = shipConfig.texture || 'player';
+
 
         this.playerSpeed         = shipConfig.speed;
         this.fireCooldown        = shipConfig.fireRate;
@@ -65,18 +78,30 @@ export default class EndlessBase extends Phaser.Scene {
         this.playerDamage        = shipConfig.damage;
         this.playerBulletTexture = shipConfig.bulletTexture || 'bullet_player';
 
+        // Shared health pool — lives on scene so both players share it
+        this.maxSharedHealth = this.playerHealth;
+        this.sharedHealth    = this.playerHealth;
+        this.sharedShield    = 0;
+
         // Groups
-        this.playerBullets = this.physics.add.group({ classType: Bullet, maxSize: 50, runChildUpdate: true });
+        this.playerBullets = this.physics.add.group({ classType: Bullet, maxSize: 80, runChildUpdate: true });
         this.enemies       = this.physics.add.group({ runChildUpdate: true });
-        this.enemyBullets  = this.physics.add.group({ classType: Bullet, maxSize: 50, runChildUpdate: true });
+        this.enemyBullets  = this.physics.add.group({ classType: Bullet, maxSize: 80, runChildUpdate: true });
 
-        // Player
-        this.player = new Player(this, 100, (H - HUD_H) / 2, this.playerBullets);
+        // ── Spawn player(s) ───────────────────────────────────────────────
+        this.players = [];
+
+        this.player = new Player(this, 100, (H - HUD_H) / 2, this.playerBullets, P1_CONTROLS, 1,shipTexture);
         this.player.setTexture(shipConfig.texture || 'player');
+        this.players.push(this.player);
 
-        this.player.on('damaged',        (hp)     => { this.health = hp; this.registry.events.emit('update-health', hp); });
-        this.player.on('shield-changed', (shield) => { this.registry.events.emit('update-shield', shield); });
-        this.player.on('dead',           ()       => { this.registry.events.emit('game-over'); this.endGame('dead'); });
+        if (this.isCoop) {
+            // P2 spawns slightly offset, same ship texture
+            this.player2 = new Player(this, 100, (H - HUD_H) / 2 + 80, this.playerBullets, P2_CONTROLS, 2,shipTexture);
+            this.player2.setTexture(shipConfig.texture || 'player');
+            this.player2.setTint(0xaaddff); // slight blue tint to distinguish P2
+            this.players.push(this.player2);
+        }
 
         // Systems
         this.spawnSystem   = new SpawnSystem(this);
@@ -85,22 +110,53 @@ export default class EndlessBase extends Phaser.Scene {
         this.powerupSystem = new PowerupSystem(this);
         this.audio         = new AudioSystem(this);
 
-        // Apply difficulty to spawn system
         this.spawnSystem.spawnInterval    = this.cfg.spawnInterval;
         this.spawnSystem.spawnIntervalMin = this.cfg.spawnIntervalMin;
         this.spawnSystem.maxEnemies       = this.cfg.maxEnemies;
 
-        const playerRef = this.player;
+        // ── Overlaps for each player ──────────────────────────────────────
+        this.players.forEach(p => this.registerPlayerOverlaps(p));
 
+        // HUD reset
+        this.registry.events.emit('update-max-health', this.maxSharedHealth);
+        this.registry.events.emit('update-score',      this.score);
+        this.registry.events.emit('update-health',     this.sharedHealth);
+        this.registry.events.emit('update-shield',     0);
+
+        // Co-op P2 indicator
+        if (this.isCoop) {
+            this.add.text(this.player2.x - 20, this.player2.y - 40, 'P2', {
+                fontSize: '14px', color: '#aaddff',
+            }).setOrigin(0.5);
+
+            this.add.text(this.player.x - 20, this.player.y - 40, 'P1', {
+                fontSize: '14px', color: '#ffffff',
+            }).setOrigin(0.5);
+        }
+
+        this.audio.playMusic('music_game');
+
+        this.events.on('shutdown', () => {
+            this.audio.destroy();
+        });
+
+        this.events.on('destroy', () => {
+            this.audio.destroy();
+        });
+    }
+
+    registerPlayerOverlaps(playerRef) {
+        // Player bullets → enemies
         this.physics.add.overlap(
             this.playerBullets, this.enemies,
             this.combatSystem.handleBulletHitEnemy, null, this.combatSystem
         );
 
+        // Enemy bullets → this player
         this.physics.add.overlap(
             this.enemyBullets, playerRef,
-            (objA, objB) => {
-                const bullet = (objA instanceof Bullet) ? objA : objB;
+            (a, b) => {
+                const bullet = (a instanceof Bullet) ? a : b;
                 bullet.setActive(false).setVisible(false);
                 bullet.body.enable = false;
                 playerRef.takeDamage(bullet.damage || 10);
@@ -108,31 +164,63 @@ export default class EndlessBase extends Phaser.Scene {
             () => playerRef.active && !playerRef.isDead
         );
 
+        // Enemy body → this player
         this.physics.add.overlap(
             this.enemies, playerRef,
-            (objA, objB) => {
+            (a, b) => {
                 if (!playerRef.active || playerRef.isDead) return;
-                const enemy = (objA === playerRef) ? objB : objA;
+                const enemy = (a === playerRef) ? b : a;
                 if (!enemy.active) return;
                 this.onEnemyKilled(enemy, true);
                 enemy.destroy();
-                playerRef.takeDamage(Math.ceil(20 * this.cfg.enemyDamageMult));
+                playerRef.takeDamage(20);
             },
             () => playerRef.active && !playerRef.isDead
         );
+    }
 
-        this.registry.events.emit('update-max-health', this.playerHealth);
-        this.registry.events.emit('update-score',      this.score);
-        this.registry.events.emit('update-health',     this.playerHealth);
-        this.registry.events.emit('update-shield',     0);
+    // Called when a player dies — in co-op game ends only when ALL dead
+    onPlayerDied(deadPlayer) {
+        const allDead = this.players.every(p => p.isDead || !p.active);
+
+        if (allDead) {
+            this.registry.events.emit('game-over');
+            this.endGame('dead');
+        } else if (this.isCoop) {
+            // Show "P1/P2 down" message but keep going
+            const who = deadPlayer.playerIndex === 1 ? 'P1' : 'P2';
+            const msg = this.add.text(
+                this.scale.width / 2,
+                this.scale.height / 2 - 40,
+                `${who} DOWN!`, {
+                    fontSize: '40px', color: '#ff4444',
+                    stroke: '#000000', strokeThickness: 5,
+                }
+            ).setOrigin(0.5).setDepth(80);
+
+            this.tweens.add({
+                targets: msg, alpha: 0, y: msg.y - 60,
+                delay: 800, duration: 600,
+                onComplete: () => msg.destroy(),
+            });
+        } else {
+            // Solo
+            this.registry.events.emit('game-over');
+            this.endGame('dead');
+        }
     }
 
     update(time, delta) {
         this.bg.tilePositionX += 1;
-        if (this.player?.active) this.player.update(time, delta);
+
+        this.players.forEach(p => {
+            if (p?.active) p.update(time, delta);
+        });
+
         this.spawnSystem.update(time, delta);
         this.levelSystem.update(time, delta);
 
+        // Time-based score
         this.scoreTimer += delta;
         if (this.scoreTimer >= 1000) {
             this.scoreTimer = 0;
@@ -166,7 +254,6 @@ export default class EndlessBase extends Phaser.Scene {
         this.level = level;
     }
 
-    // SpawnSystem calls this — we inject difficulty multipliers into config
     getModifiedEnemyConfig(config) {
         return {
             ...config,
@@ -183,8 +270,8 @@ export default class EndlessBase extends Phaser.Scene {
         if (this.gameEnded) return;
         this.gameEnded = true;
 
-        if (this.powerupSystem) this.powerupSystem.destroy();
-        if (this.audio)         this.audio.destroy();
+        try { this.powerupSystem?.destroy(); } catch(e) {}
+        try { this.audio?.destroy(); } catch(e) {}
 
         const coinsEarned = Math.floor(this.score / 10);
         const isNewHigh   = PlayerData.submitScore(this.score);
@@ -199,7 +286,8 @@ export default class EndlessBase extends Phaser.Scene {
 
         this.add.rectangle(0, 0, W, H, 0x000000, 0.82).setOrigin(0).setDepth(90);
 
-        this.add.text(W / 2, H / 2 - 210, this.cfg.label.toUpperCase() + ' MODE', {
+        const modeLabel = this.cfg.label.toUpperCase() + (this.isCoop ? ' · CO-OP' : '');
+        this.add.text(W / 2, H / 2 - 210, modeLabel, {
             fontSize: '18px', color: this.cfg.color, fontStyle: 'bold',
             backgroundColor: '#111111', padding: { x: 14, y: 4 },
         }).setOrigin(0.5).setDepth(91);
@@ -210,11 +298,11 @@ export default class EndlessBase extends Phaser.Scene {
             fontStyle: 'bold', stroke: '#000000', strokeThickness: 5,
         }).setOrigin(0.5).setDepth(91);
 
-        this.add.text(W / 2, H / 2 - 95,  `Score: ${this.score}`,              { fontSize: '30px', color: '#ffffff' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 - 50,  `Best: ${highscore}`,               { fontSize: '20px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 - 10,  `Multiplier: ×${this.cfg.scoreMultiplier}`, { fontSize: '18px', color: this.cfg.color }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 + 35,  `💰 +${coinsEarned} coins`,         { fontSize: '26px', color: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 + 75,  `Total: ${PlayerData.getMoney()} coins`, { fontSize: '16px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W / 2, H / 2 - 95,  `Score: ${this.score}`,                    { fontSize: '30px', color: '#ffffff' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W / 2, H / 2 - 50,  `Best: ${highscore}`,                      { fontSize: '20px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W / 2, H / 2 - 10,  `Multiplier: ×${this.cfg.scoreMultiplier}`,{ fontSize: '18px', color: this.cfg.color }).setOrigin(0.5).setDepth(91);
+        this.add.text(W / 2, H / 2 + 35,  `💰 +${coinsEarned} coins`,                { fontSize: '26px', color: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5).setDepth(91);
+        this.add.text(W / 2, H / 2 + 75,  `Total: ${PlayerData.getMoney()} coins`,   { fontSize: '16px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
 
         const btn = this.add.text(W / 2, H / 2 + 140, '[ Main Menu ]', {
             fontSize: '28px', color: '#ffffff',
@@ -224,6 +312,8 @@ export default class EndlessBase extends Phaser.Scene {
         btn.on('pointerover',  () => btn.setStyle({ color: '#ffff00' }));
         btn.on('pointerout',   () => btn.setStyle({ color: '#ffffff' }));
         btn.on('pointerdown',  () => {
+            this.sound.stopAll();
+            this.audio.destroy(); // fade out nicely
             this.scene.stop(this.scene.key);
             this.scene.stop('UIScene');
             this.scene.start('MenuScene');

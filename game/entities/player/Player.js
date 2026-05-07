@@ -2,48 +2,105 @@
 import Bullet from '../bullets/Bullet.js';
 
 export default class Player extends Phaser.Physics.Arcade.Sprite {
-    constructor(scene, x, y, bulletGroup) {
+
+    // controls config:
+    // { up, down, left, right, fire } — Phaser.Input.Keyboard.KeyCodes values
+    // playerIndex: 1 or 2 — used for tint color on damage
+    constructor(scene, x, y, bulletGroup, controls = null, playerIndex = 1, texture = 'player') {
         super(scene, x, y, 'player');
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
-
-        this.setAngle(90);
-        this.setScale(0.1);
+        
+        this.playerIndex  = playerIndex;
         this.setCollideWorldBounds(true);
+        this.setAngle(90);
 
-        // Stats from scene — set before new Player()
-        this.speed          = scene.playerSpeed   ?? 300;
-        this.fireCooldown   = scene.fireCooldown  ?? 250;
-        this.maxHealth      = scene.playerHealth  ?? 100;
-        this.health         = this.maxHealth;
-        this.bulletDamage   = scene.playerDamage  ?? 10;
-        // Which bullet texture this ship fires — set by game scene
-        this.bulletTexture  = scene.playerBulletTexture ?? 'bullet_player';
+        console.log(texture);
 
-        // Shield
-        this.maxShield = 100;
-        this.shield    = 0;
+        switch (texture) {
+        case 'player2':{
+            const physicsWidth = 1000;   
+            const physicsHeight = 750; 
+            this.setScale(0.1);
+            this.body.setSize(physicsWidth, physicsHeight, true);
+            this.body.setOffset(0, 120);
+            break;
+        }
+        case 'player3':{
+            const physicsWidth = 250; 
+            const physicsHeight = 300; 
+            this.setScale(0.4);
+            this.body.setSize(physicsWidth, physicsHeight, true);
+            this.body.setOffset(0, 0);
+            break;
+        }
+        case 'player4':{
+            const physicsWidth = 250; 
+            const physicsHeight = 400; 
+            this.setScale(0.5);
+            this.body.setSize(physicsWidth, physicsHeight, true);
+            this.body.setOffset(40, -60);
+            break;
+        }
+        case 'player5':{
+            const physicsWidth = 250; 
+            const physicsHeight = 300; 
+            this.setScale(0.6);
+            this.body.setSize(physicsWidth, physicsHeight, true);
+            this.body.setOffset(0, 0);
+            break;
+        }
+        default:{
+            this.setScale(0.1);
+            this.setCollideWorldBounds(true);
+            break;
+        }
+    }
 
-        // State
-        this.isDead    = false;
-        this.lastFired = 0;
+        // Stats from scene
+        this.speed        = scene.playerSpeed  ?? 300;
+        this.fireCooldown = scene.fireCooldown ?? 250;
+        this.maxHealth    = scene.playerHealth ?? 100;
+        this.bulletDamage = scene.playerDamage ?? 10;
+        this.bulletTexture = scene.playerBulletTexture ?? 'bullet_player';
 
-        // FIX: use shared bulletGroup — NOT a private group.
-        // Private group is invisible to overlap detection.
-        this.bullets = bulletGroup;
-
-        // Sound guard
-        try {
-            this.shootSound = scene.sound.add('shoot');
-        } catch(e) {
-            this.shootSound = null;
+        // In co-op, health/shield live on the SCENE (shared pool)
+        // In solo, health/shield live on the player itself
+        // We always read/write via scene helpers so both modes work the same
+        if (!scene.sharedHealth) {
+            // Solo mode — init scene health from playerHealth
+            scene.sharedHealth = scene.playerHealth ?? 100;
+            scene.sharedShield = 0;
+            scene.maxSharedHealth = scene.playerHealth ?? 100;
         }
 
-        this.cursors = scene.input.keyboard.createCursorKeys();
-        this.fireKey = scene.input.keyboard.addKey(
-            Phaser.Input.Keyboard.KeyCodes.SPACE
-        );
+        this.isDead    = false;
+        this.lastFired = 0;
+        this.bullets   = bulletGroup;
+
+        // Sound
+        try { this.shootSound = scene.sound.add('shoot'); }
+        catch(e) { this.shootSound = null; }
+
+        // Controls — default P1 (WASD + Space)
+        const KC = Phaser.Input.Keyboard.KeyCodes;
+        const defaultControls = {
+            up:    KC.W,
+            down:  KC.S,
+            left:  KC.A,
+            right: KC.D,
+            fire:  KC.SPACE,
+        };
+
+        const cfg = controls || defaultControls;
+        this.keys = {
+            up:    scene.input.keyboard.addKey(cfg.up),
+            down:  scene.input.keyboard.addKey(cfg.down),
+            left:  scene.input.keyboard.addKey(cfg.left),
+            right: scene.input.keyboard.addKey(cfg.right),
+            fire:  scene.input.keyboard.addKey(cfg.fire),
+        };
     }
 
     update(time, delta) {
@@ -54,75 +111,81 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     handleMovement() {
         this.setVelocity(0);
-        if (this.cursors.left.isDown)       this.setVelocityX(-this.speed);
-        else if (this.cursors.right.isDown) this.setVelocityX(this.speed);
-        if (this.cursors.up.isDown)         this.setVelocityY(-this.speed);
-        else if (this.cursors.down.isDown)  this.setVelocityY(this.speed);
+        if (this.keys.left.isDown)       this.setVelocityX(-this.speed);
+        else if (this.keys.right.isDown) this.setVelocityX(this.speed);
+        if (this.keys.up.isDown)         this.setVelocityY(-this.speed);
+        else if (this.keys.down.isDown)  this.setVelocityY(this.speed);
     }
 
     handleShooting(time) {
-        // isDown instead of JustDown — holding fires continuously
-        if (!this.fireKey.isDown) return;
+        if (!this.keys.fire.isDown) return;
         if (time < this.lastFired + this.fireCooldown) return;
 
         const bullet = this.bullets.get();
         if (bullet) {
-            // Pass ship-specific bullet texture and damage
-            bullet.fire(
-                this.x + 20, this.y,
-                400, 0,
-                this.bulletTexture,
-                this.bulletDamage
-            );
+            bullet.fire(this.x + 20, this.y, 400, 0, this.bulletTexture, this.bulletDamage);
             this.lastFired = time;
-            if (this.shootSound) this.shootSound.play();
+            if (this.scene.audio) this.scene.audio.playShoot();
         }
     }
 
     takeDamage(amount = 10) {
-        // FIX: hard guard — overlaps can fire multiple times per frame.
-        // Without this health goes -999 and die() fires repeatedly,
-        // crashing on an already-destroyed physics body.
         if (this.isDead || !this.active) return;
 
+        // All damage goes to SHARED pool on scene
+        const scene = this.scene;
+
         // Shield absorbs first
-        if (this.shield > 0) {
-            const absorbed = Math.min(this.shield, amount);
-            this.shield   -= absorbed;
-            amount        -= absorbed;
-            this.emit('shield-changed', this.shield);
+        if (scene.sharedShield > 0) {
+            const absorbed     = Math.min(scene.sharedShield, amount);
+            scene.sharedShield -= absorbed;
+            amount             -= absorbed;
+            scene.registry.events.emit('update-shield', scene.sharedShield);
+
+            // Blue flash
             this.setTint(0x4488ff);
-            this.scene.time.delayedCall(120, () => {
-                if (this.active) this.clearTint();
-            });
+            scene.time.delayedCall(120, () => { if (this.active) this.clearTint(); });
         }
 
-        // Remainder hits health
         if (amount > 0) {
-            this.health = Math.max(0, this.health - amount);
-            this.emit('damaged', this.health);
-            this.setTint(0xff0000);
-            this.scene.time.delayedCall(120, () => {
-                if (this.active) this.clearTint();
-            });
-            if (this.health <= 0) this.die();
+            scene.sharedHealth = Math.max(0, scene.sharedHealth - amount);
+            scene.registry.events.emit('update-health', scene.sharedHealth);
+
+            // Red flash — different tint per player so you can see who got hit
+            const tint = this.playerIndex === 1 ? 0xff0000 : 0xff6600;
+            this.setTint(tint);
+            scene.time.delayedCall(120, () => { if (this.active) this.clearTint(); });
+
+            if (scene.sharedHealth <= 0) this.die();
         }
     }
 
+    // addShield / addHealth operate on shared pool
     addShield(amount = 50) {
-        this.shield = Math.min(this.maxShield, this.shield + amount);
-        this.emit('shield-changed', this.shield);
+        const scene = this.scene;
+        scene.sharedShield = Math.min(100, (scene.sharedShield || 0) + amount);
+        scene.registry.events.emit('update-shield', scene.sharedShield);
     }
 
     addHealth(amount = 30) {
-        this.health = Math.min(this.maxHealth, this.health + amount);
-        this.emit('damaged', this.health);
+        const scene = this.scene;
+        scene.sharedHealth = Math.min(scene.maxSharedHealth, (scene.sharedHealth || 0) + amount);
+        scene.registry.events.emit('update-health', scene.sharedHealth);
     }
 
     die() {
         if (this.isDead) return;
         this.isDead = true;
-        this.emit('dead');
+
+        // In co-op: only end game if ALL players are dead
+        if (typeof this.scene.onPlayerDied === 'function') {
+            this.scene.onPlayerDied(this);
+        } else {
+            // Solo fallback
+            this.scene.registry.events.emit('game-over');
+            this.scene.endGame?.('dead');
+        }
+
         this.destroy();
     }
 }

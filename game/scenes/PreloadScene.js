@@ -17,6 +17,12 @@ export default class PreloadScene extends Phaser.Scene {
             }
         });
         
+        // ── Cursor img ────────────────────────────────────────────────────
+        this.load.image('cursor_anim_1', 'assets/cursor_1.png');
+        this.load.image('cursor_anim_2', 'assets/cursor_2.png');
+        this.load.image('cursor_anim_3', 'assets/cursor_3.png');
+        this.load.image('cursor_anim_4', 'assets/cursor_4.png');
+        
         // ── JSON data ─────────────────────────────────────────────────────
         this.load.json('shipsData',   'game/data/ships.json');
         this.load.json('enemiesData', 'game/data/enemies.json');
@@ -61,7 +67,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('bullet_boss',   'assets/imgs/bullets/BulletLava.png');
  
         // ── Backgrounds ───────────────────────────────────────────────────
-        this.load.image('menu_bg',  'assets/imgs/backgrounds/MainMenu.png');
+        this.load.image('menu_bg',  'assets/imgs/backgrounds/MainMenu.png');    
         this.load.image('game_bg',  'assets/imgs/backgrounds/endless.png');
  
         // ── UI ────────────────────────────────────────────────────────────
@@ -86,10 +92,10 @@ export default class PreloadScene extends Phaser.Scene {
         
 
         // Background music — one per scene
-        this.load.audio('music_menu',    'assets/sounds/music/menu.mp3');
-        this.load.audio('music_game',    'assets/sounds/music/game.mp3');
-        this.load.audio('music_level1',  'assets/sounds/music/level1.mp3');
-        this.load.audio('music_level2',  'assets/sounds/music/level2.mp3');
+        this.load.audio('music_menu',    'assets/sounds/music/MenuMusic.mp3');
+        this.load.audio('music_game',    'assets/sounds/music/GameMusic.mp3');
+        this.load.audio('music_level1',  'assets/sounds/music/Level12.mp3');
+        this.load.audio('music_level2',  'assets/sounds/music/Level12.mp3');
 
         // SFX
         this.load.audio('shoot',           'assets/sounds/sfx/shoot.wav');

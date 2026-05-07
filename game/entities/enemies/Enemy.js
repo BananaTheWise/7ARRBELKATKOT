@@ -99,12 +99,12 @@ export default class Enemy extends Phaser.Physics.Arcade.Sprite {
         const ex = this.scene.add.sprite(this.x, this.y, 'explosion');
         // Scale explosion relative to enemy visual size
         ex.setScale(Math.max(0.4, this.scaleX * 2.5));
-        ex.play('explode');
+        ex.play('explode'); 
         ex.on('animationcomplete', () => ex.destroy());
 
         // Play sound
         try {
-            this.scene.sound.play('explosion', { volume: 0.4 });
+            if (this.scene.audio) this.scene.audio.playExplosion();
         } catch(e) {}
     }
 }

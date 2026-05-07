@@ -1,187 +1,199 @@
 // game/systems/PowerupSystem.js
 import Powerup, { POWERUP_TYPES } from '../entities/powerups/Powerup.js';
 
-const ALL_TYPES   = Object.values(POWERUP_TYPES);
-const DURATION    = 10000;
-const DROP_CHANCE = 0.25;
-const TIMER_SPAWN = 15000;
-
-// ── Powerup config per type ───────────────────────────────────────────────────
-// Adjust scale here to fit whatever image size you use.
-// At 128x128px: 0.5 = 64px, 0.4 = 51px, 0.3 = 38px
-const POWERUP_CONFIG = {
-    [POWERUP_TYPES.SHIELD]:       { texture: 'powerup_shield',       scale: 0.08 },
-    [POWERUP_TYPES.ATTACK_SPEED]: { texture: 'powerup_attack_speed', scale: 0.08 },
-    [POWERUP_TYPES.HEALTH]:       { texture: 'powerup_health',       scale: 0.5  },
-    [POWERUP_TYPES.GOLDEN_STAR]:  { texture: 'powerup_golden_star',  scale: 0.08 },
-};
+const ALL_TYPES = Object.values(POWERUP_TYPES);
+const DURATION  = 10000;
 
 export default class PowerupSystem {
     constructor(scene) {
         this.scene          = scene;
         this.active         = {};
-        this._goldenOverlap = null;
+        this._goldenOverlap = [];
+        this.DROP_CHANCE    = 0.25;
 
         this.group = scene.physics.add.group({
             classType:      Powerup,
             runChildUpdate: true,
         });
 
-        const playerRef = scene.player;
-
-        scene.physics.add.overlap(
-            this.group,
-            playerRef,
-            (objA, objB) => {
-                const powerup = (objA instanceof Powerup) ? objA : objB;
-                if (!powerup.powerupType) {
-                    console.error("Powerup missing type", powerup);
-                    powerup.destroy();
-                    return;
-                }
-                this.collect(powerup, playerRef);
-            },
-            () => playerRef.active && !playerRef.isDead
-        );
+        // Register overlap for ALL players in the scene
+        const players = scene.players || [scene.player];
+        players.forEach(p => this.registerPlayerOverlap(p));
 
         this.spawnTimer = scene.time.addEvent({
-            delay:    TIMER_SPAWN,
+            delay:    15000,
             loop:     true,
             callback: () => this.spawnRandom(),
         });
     }
 
-    // ── Called by Enemy on death ──────────────────────────────────────────
+    registerPlayerOverlap(playerRef) {
+        this.scene.physics.add.overlap(
+            this.group,
+            playerRef,
+            (objA, objB) => {
+                const powerup = (objA instanceof Powerup) ? objA : objB;
+                if (!powerup.powerupType) { powerup.destroy(); return; }
+                this.collect(powerup, playerRef);
+            },
+            () => playerRef.active && !playerRef.isDead
+        );
+    }
+
     onEnemyKilled(x, y) {
-        if (Math.random() < DROP_CHANCE) {
-            const type = Phaser.Utils.Array.GetRandom(ALL_TYPES);
-            this.spawn(x, y, type);
+        if (Math.random() < this.DROP_CHANCE) {
+            this.spawn(x, y, Phaser.Utils.Array.GetRandom(ALL_TYPES));
         }
     }
 
-    // ── Spawn ─────────────────────────────────────────────────────────────
     spawn(x, y, type) {
-        const cfg = POWERUP_CONFIG[type] || POWERUP_CONFIG[POWERUP_TYPES.SHIELD];
-
-        const p = this.group.create(x, y, null);
+        const cfg = this._configFor(type);
+        const p   = this.group.create(x, y, null);
         p.powerupType = type;
         p.setTexture(cfg.texture);
         p.setScale(cfg.scale);
         p.setOrigin(0.5, 0.5);
         p.setAngle(0);
         p.applyVelocity();
-
-        console.log("Powerup spawned:", type, "scale:", cfg.scale, "group size:", this.group.getLength());
     }
 
     spawnRandom() {
-        const x    = this.scene.game.config.width + 30;
-        const y    = Phaser.Math.Between(60, this.scene.scale.height - 60);
-        const type = Phaser.Utils.Array.GetRandom(ALL_TYPES);
-        this.spawn(x, y, type);
+        const x = this.scene.game.config.width + 30;
+        const y = Phaser.Math.Between(60, this.scene.scale.height - 60);
+        this.spawn(x, y, Phaser.Utils.Array.GetRandom(ALL_TYPES));
     }
 
-    // ── Collect ───────────────────────────────────────────────────────────
     collect(powerup, player) {
         const type = powerup.powerupType;
         powerup.destroy();
-        console.log("Powerup collected:", type);
+        console.log("Powerup collected:", type, "by P" + player.playerIndex);
 
+        // Refresh if already active
         if (this.active[type] && type !== POWERUP_TYPES.HEALTH) {
             this.active[type].reset({ delay: DURATION, repeat: 0 });
             this.showLabel(type, true);
-            if (type === POWERUP_TYPES.SHIELD) player.addShield(50);
+            if (type === POWERUP_TYPES.SHIELD) {
+                // Apply to all players
+                this.getAllPlayers().forEach(p => p.addShield(50));
+            }
             return;
         }
 
-        this.applyEffect(type, player);
+        this.applyEffect(type);
         this.showLabel(type, false);
 
         if (type === POWERUP_TYPES.HEALTH) return;
 
         this.active[type] = this.scene.time.delayedCall(DURATION, () => {
-            this.expireEffect(type, player);
+            this.expireEffect(type);
             delete this.active[type];
         });
     }
 
-    // ── Apply effects ─────────────────────────────────────────────────────
-    applyEffect(type, player) {
+    // Returns all active players in the scene
+    getAllPlayers() {
+        const arr = this.scene.players || [this.scene.player];
+        return arr.filter(p => p?.active && !p.isDead);
+    }
+
+    applyEffect(type) {
+        const players = this.getAllPlayers();
+
         switch (type) {
             case POWERUP_TYPES.SHIELD:
-                player.addShield(50);
+                // Shield is shared pool — one call is enough
+                players[0]?.addShield(50);
                 break;
 
             case POWERUP_TYPES.ATTACK_SPEED:
-                player._origCooldown = player.fireCooldown;
-                player.fireCooldown  = Math.floor(player.fireCooldown / 2);
+                // Speed buff applies to ALL players
+                players.forEach(p => {
+                    p._origCooldown = p.fireCooldown;
+                    p.fireCooldown  = Math.floor(p.fireCooldown / 2);
+                });
                 break;
 
             case POWERUP_TYPES.HEALTH:
-                player.addHealth(30);
+                // Health is shared pool — one call
+                players[0]?.addHealth(30);
                 break;
 
             case POWERUP_TYPES.GOLDEN_STAR:
-                player._origTakeDamage = player.takeDamage.bind(player);
-                player._origCooldown   = player.fireCooldown;
-                player.takeDamage      = () => {};
-                player.fireCooldown    = Math.floor(player.fireCooldown / 3);
-                player._goldenState    = true;
-                player.setTint(0xffdd00);
+                // ALL players go golden
+                players.forEach(p => {
+                    p._origTakeDamage = p.takeDamage.bind(p);
+                    p._origCooldown   = p.fireCooldown;
+                    p.takeDamage      = () => {};
+                    p.fireCooldown    = Math.floor(p.fireCooldown / 3);
+                    p._goldenState    = true;
+                    p.setTint(0xffdd00);
+                });
 
-                this._goldenOverlap = this.scene.physics.add.overlap(
-                    this.scene.enemies,
-                    player,
-                    (objA, objB) => {
-                        const enemy = (objA === player) ? objB : objA;
-                        if (!enemy.active || !player._goldenState) return;
-                        this.scene.onEnemyKilled(enemy);
-                        enemy.destroy();
-                    },
-                    () => player.active && player._goldenState && !player.isDead
-                );
+                // Golden contact kill overlap for each player
+                players.forEach(p => {
+                    const ov = this.scene.physics.add.overlap(
+                        this.scene.enemies, p,
+                        (a, b) => {
+                            const enemy = (a === p) ? b : a;
+                            if (!enemy.active || !p._goldenState) return;
+                            this.scene.onEnemyKilled(enemy);
+                            enemy.destroy();
+                        },
+                        () => p.active && p._goldenState && !p.isDead
+                    );
+                    this._goldenOverlap.push(ov);
+                });
                 break;
         }
     }
 
-    // ── Expire effects ────────────────────────────────────────────────────
-    expireEffect(type, player) {
-        if (!player?.active) return;
+    expireEffect(type) {
+        const players = this.scene.players || [this.scene.player];
 
         switch (type) {
             case POWERUP_TYPES.SHIELD:
-                player.shield = 0;
-                player.emit('shield-changed', 0);
+                this.scene.sharedShield = 0;
+                this.scene.registry.events.emit('update-shield', 0);
                 break;
 
             case POWERUP_TYPES.ATTACK_SPEED:
-                if (player._origCooldown !== undefined) {
-                    player.fireCooldown = player._origCooldown;
-                    delete player._origCooldown;
-                }
+                players.forEach(p => {
+                    if (!p?.active) return;
+                    if (p._origCooldown !== undefined) {
+                        p.fireCooldown = p._origCooldown;
+                        delete p._origCooldown;
+                    }
+                });
                 break;
 
             case POWERUP_TYPES.GOLDEN_STAR:
-                if (player._origTakeDamage) {
-                    player.takeDamage = player._origTakeDamage;
-                    delete player._origTakeDamage;
-                }
-                if (player._origCooldown !== undefined) {
-                    player.fireCooldown = player._origCooldown;
-                    delete player._origCooldown;
-                }
-                player._goldenState = false;
-                player.clearTint();
+                players.forEach(p => {
+                    if (!p?.active) return;
+                    if (p._origTakeDamage) { p.takeDamage = p._origTakeDamage; delete p._origTakeDamage; }
+                    if (p._origCooldown !== undefined) { p.fireCooldown = p._origCooldown; delete p._origCooldown; }
+                    p._goldenState = false;
+                    p.clearTint();
+                    if (this.scene.isCoop && p.playerIndex === 2) p.setTint(0xaaddff);
+                });
 
-                if (this._goldenOverlap) {
-                    this.scene.physics.world.removeCollider(this._goldenOverlap);
-                    this._goldenOverlap = null;
-                }
+                this._goldenOverlap.forEach(ov => {
+                    try { this.scene.physics.world.removeCollider(ov); } catch(e) {}
+                });
+                this._goldenOverlap = [];
                 break;
         }
     }
 
-    // ── Floating label ────────────────────────────────────────────────────
+    _configFor(type) {
+        const map = {
+            [POWERUP_TYPES.SHIELD]:       { texture: 'powerup_shield',       scale: 0.08 },
+            [POWERUP_TYPES.ATTACK_SPEED]: { texture: 'powerup_attack_speed', scale: 0.08 },
+            [POWERUP_TYPES.HEALTH]:       { texture: 'powerup_health',       scale: 0.35 },
+            [POWERUP_TYPES.GOLDEN_STAR]:  { texture: 'powerup_golden_star',  scale: 0.08 },
+        };
+        return map[type] || map[POWERUP_TYPES.SHIELD];
+    }
+
     showLabel(type, isRefresh) {
         const labels = {
             [POWERUP_TYPES.SHIELD]:       '🛡 Shield',
@@ -189,33 +201,25 @@ export default class PowerupSystem {
             [POWERUP_TYPES.HEALTH]:       '❤ Health +30',
             [POWERUP_TYPES.GOLDEN_STAR]:  '⭐ Golden Star',
         };
-
         const txt = this.scene.add.text(
             this.scene.scale.width / 2,
             this.scene.scale.height - 80,
             (isRefresh ? 'Refreshed: ' : '') + (labels[type] || type), {
-                fontSize:        '26px',
-                color:           '#ffdd00',
-                fontStyle:       'bold',
-                stroke:          '#000000',
-                strokeThickness: 4,
+                fontSize: '26px', color: '#ffdd00', fontStyle: 'bold',
+                stroke: '#000000', strokeThickness: 4,
             }
         ).setOrigin(0.5).setDepth(100);
 
         this.scene.tweens.add({
-            targets:    txt,
-            alpha:      0,
-            y:          txt.y - 40,
-            delay:      900,
-            duration:   600,
+            targets: txt, alpha: 0, y: txt.y - 40,
+            delay: 900, duration: 600,
             onComplete: () => txt.destroy(),
         });
     }
 
-    // ── Cleanup ───────────────────────────────────────────────────────────
     destroy() {
         if (this.spawnTimer) this.spawnTimer.remove();
-        Object.values(this.active).forEach(t => { if (t) t.remove(); });
+        Object.values(this.active).forEach(t => { try { t?.remove(); } catch(e) {} });
         this.active = {};
     }
 }

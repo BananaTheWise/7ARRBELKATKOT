@@ -1,8 +1,0 @@
-{
-    "enemyWaves": [
-        { "type": "enemy", "count": 5, "delay": 1000 },
-        { "type": "fast", "count": 3, "delay": 2000 },
-        { "type": "tank", "count": 2, "delay": 3000 },
-        { "type": "shooter", "count": 3, "delay": 2000 }
-    ]
-}

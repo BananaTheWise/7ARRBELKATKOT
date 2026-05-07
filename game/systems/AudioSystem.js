@@ -12,6 +12,11 @@ export default class AudioSystem {
 
         this.music      = null;  // current background music track
         this.sfxSounds  = {};    // cached SFX objects keyed by name
+
+        this._sfxLastPlayed = {};
+        this._sfxCooldowns = {
+            shoot: 150, // ms between shots (tweak this)
+        };
     }
 
     // ── Settings persistence ──────────────────────────────────────────────
@@ -75,25 +80,46 @@ export default class AudioSystem {
     }
 
     stopMusic(fadeOutMs = 800) {
-        if (!this.music) return;
+        if (!this.music || !this.music.active) return;
+
+        if (this._stoppingMusic) return;
+        this._stoppingMusic = true;
+
+        const finish = () => {
+            if (this.music) {
+                this.music.stop();
+                this.music.destroy();
+                this.music = null;
+            }
+            this._stoppingMusic = false; // ✅ RESET HERE
+        };
+
+        // Scene shutting down → no tween
+        if (!this.scene || !this.scene.sys.isActive()) {
+            finish();
+            return;
+        }
 
         if (fadeOutMs > 0) {
+            const musicRef = this.music;
+
             this.scene.tweens.add({
-                targets:  this.music,
-                volume:   0,
+                targets: musicRef,
+                volume: 0,
                 duration: fadeOutMs,
                 onComplete: () => {
-                    if (this.music) {
-                        this.music.stop();
-                        this.music.destroy();
+                    if (musicRef && musicRef.active) {
+                        musicRef.stop();
+                        musicRef.destroy();
+                    }
+                    if (this.music === musicRef) {
                         this.music = null;
                     }
+                    this._stoppingMusic = false; // ✅ ALSO HERE
                 },
             });
         } else {
-            this.music.stop();
-            this.music.destroy();
-            this.music = null;
+            finish();
         }
     }
 
@@ -117,17 +143,22 @@ export default class AudioSystem {
     // Play a one-shot sound effect
     playSFX(key, volumeOverride) {
         if (!this.sfxEnabled) return;
-        if (!this.scene.cache.audio.has(key)) {
-            console.warn("AudioSystem: sfx key not found:", key);
-            return;
-        }
+        if (!this.scene.cache.audio.has(key)) return;
+
+        const now = this.scene.time.now;
+
+        // ⛔ Rate limit check
+        const cooldown = this._sfxCooldowns[key] || 0;
+        const lastTime = this._sfxLastPlayed[key] || 0;
+
+        if (now - lastTime < cooldown) return;
+
+        this._sfxLastPlayed[key] = now;
 
         try {
             const vol = volumeOverride ?? this.sfxVolume;
             this.scene.sound.play(key, { volume: vol });
-        } catch(e) {
-            console.warn("AudioSystem: failed to play sfx:", key, e);
-        }
+        } catch(e) {}
     }
 
     setSFXEnabled(enabled) {
@@ -141,7 +172,7 @@ export default class AudioSystem {
     }
 
     // ── Convenience wrappers — call these from game scenes ─────────────────
-    playShoot()     { this.playSFX('shoot'); }
+    playShoot()     { this.playSFX('shoot',0.1); }
     playExplosion() { this.playSFX('explosion'); }
     playPowerup()   { this.playSFX('powerup_collect'); }
     playBossDead()  { this.playSFX('boss_dead'); }

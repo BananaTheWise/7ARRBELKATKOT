@@ -6,6 +6,8 @@ import Boss          from '../entities/bosses/Boss.js';
 import CombatSystem  from '../systems/CombatSystem.js';
 import PowerupSystem from '../systems/PowerupSystem.js';
 import PlayerData    from '../data/PlayerData.js';
+import AudioSystem   from '../systems/AudioSystem.js';
+
 
 const HUD_H = 60;
 
@@ -26,6 +28,8 @@ export default class Level1 extends Phaser.Scene {
     }
 
     create() {
+        this.audio = new AudioSystem(this);
+        this.audio.playMusic('music_level1');
         this.score       = 0;
         this.health      = 100;
         this.currentWave = 0;
@@ -41,8 +45,14 @@ export default class Level1 extends Phaser.Scene {
         // Level 1 specific background
         this.bg = this.add.tileSprite(0, 0, W, H, 'bg_level1').setOrigin(0);
 
-        const shipsData   = this.cache.json.get('shipsData');
-        const shipConfig  = shipsData?.[PlayerData.getSelectedShip()] || Object.values(shipsData)[0];
+        // ── Ship stats & Setup ──────────────────────────────────────────
+        const shipsData    = this.cache.json.get('shipsData');
+        const rawSelection = PlayerData.getSelectedShip();
+        const shipConfig   = shipsData?.[rawSelection] || Object.values(shipsData)[0];
+        
+        // This is the string ('player', 'ship2', 'ship3', etc.)
+        const shipTexture  = shipConfig.texture || 'player';
+
 
         this.playerSpeed         = shipConfig.speed;
         this.fireCooldown        = shipConfig.fireRate;
@@ -54,7 +64,7 @@ export default class Level1 extends Phaser.Scene {
         this.enemies       = this.physics.add.group({ runChildUpdate: true });
         this.enemyBullets  = this.physics.add.group({ classType: Bullet, maxSize: 50, runChildUpdate: true });
 
-        this.player = new Player(this, 100, (H - HUD_H) / 2, this.playerBullets);
+        this.player = new Player(this, 100, (H - HUD_H) / 2, this.playerBullets, null, 1, shipTexture);
         this.player.setTexture(shipConfig.texture || 'player');
 
         this.player.on('damaged',        hp  => { this.health = hp; this.registry.events.emit('update-health', hp); });
@@ -199,7 +209,7 @@ export default class Level1 extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(91).setInteractive({ useHandCursor: true });
         btn.on('pointerover',  () => btn.setStyle({ color: '#ffff00' }));
         btn.on('pointerout',   () => btn.setStyle({ color: '#ffffff' }));
-        btn.on('pointerdown',  () => { this.scene.stop('Level1Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
+        btn.on('pointerdown',  () => { this.sound.stopAll(); this.scene.stop('Level1Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
     }
 
     endGame(reason) {
@@ -207,7 +217,7 @@ export default class Level1 extends Phaser.Scene {
         this.levelDone = true;
         try { this.powerupSystem?.destroy(); } catch(e) {}
         PlayerData.addMoney(Math.floor(this.score / 10));
-        this.time.delayedCall(100, () => { this.scene.stop('Level1Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
+        this.time.delayedCall(100, () => { this.audio.destroy(); this.sound.stopAll(); this.scene.stop('Level1Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
     }
 
     showWaveLabel(text) {
