@@ -188,7 +188,7 @@ export default class PowerupSystem {
         const map = {
             [POWERUP_TYPES.SHIELD]:       { texture: 'powerup_shield',       scale: 0.08 },
             [POWERUP_TYPES.ATTACK_SPEED]: { texture: 'powerup_attack_speed', scale: 0.08 },
-            [POWERUP_TYPES.HEALTH]:       { texture: 'powerup_health',       scale: 0.35 },
+            [POWERUP_TYPES.HEALTH]:       { texture: 'powerup_health',       scale: 0.08 },
             [POWERUP_TYPES.GOLDEN_STAR]:  { texture: 'powerup_golden_star',  scale: 0.08 },
         };
         return map[type] || map[POWERUP_TYPES.SHIELD];
