@@ -16,6 +16,8 @@ export default class PreloadScene extends Phaser.Scene {
                 this.cache.json.add(file.key, {});
             }
         });
+
+        this.load.image('story_panel', 'assets/story.png');
         
         // ── Cursor img ────────────────────────────────────────────────────
         this.load.image('cursor_anim_1', 'assets/cursor_1.png');
@@ -78,7 +80,7 @@ export default class PreloadScene extends Phaser.Scene {
         // ── Powerups ──────────────────────────────────────────────────────
         this.load.image('powerup_shield', 'assets/imgs/powerups/temppowerup.png');
         this.load.image('powerup_attack_speed', 'assets/imgs/powerups/temppowerup.png');
-        this.load.image('powerup_health', 'assets/imgs/powerups/health_powerup.png');
+        this.load.image('powerup_health', 'assets/imgs/powerups/temppowerup.png');
         this.load.image('powerup_golden_star', 'assets/imgs/powerups/temppowerup.png');
 
         // ── FX ────────────────────────────────────────────────────────────

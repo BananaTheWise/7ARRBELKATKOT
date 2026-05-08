@@ -196,32 +196,38 @@ export default class Level2 extends Phaser.Scene {
     }
 
     showScoreScreen() {
-        const W = this.scale.width, H = this.scale.height;
         const earned      = Math.floor(this.score / 10);
         const healthBonus = this.health * 2;
         PlayerData.addMoney(earned);
 
-        this.add.rectangle(0, 0, W, H, 0x000000, 0.8).setOrigin(0).setDepth(90);
-        this.add.text(W/2, H/2-160, 'LEVEL 2 COMPLETE', { fontSize: '48px', color: '#ffdd00', fontStyle: 'bold', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5).setDepth(91);
-        this.add.text(W/2, H/2-80,  `Score: ${this.score}`,             { fontSize: '30px', color: '#fff' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W/2, H/2-30,  `Health Bonus: +${healthBonus}`,    { fontSize: '22px', color: '#aaffaa' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W/2, H/2+20,  `Total: ${this.score+healthBonus}`, { fontSize: '36px', color: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W/2, H/2+65,  `💰 +${earned} coins`,              { fontSize: '24px', color: '#ffdd00' }).setOrigin(0.5).setDepth(91);
-
-        const btn = this.add.text(W/2, H/2+135, '[ Main Menu ]', {
-            fontSize: '28px', color: '#fff', backgroundColor: '#222', padding: { x: 20, y: 8 },
-        }).setOrigin(0.5).setDepth(91).setInteractive({ useHandCursor: true });
-        btn.on('pointerover',  () => btn.setStyle({ color: '#ffff00' }));
-        btn.on('pointerout',   () => btn.setStyle({ color: '#ffffff' }));
-        btn.on('pointerdown',  () => { this.sound.stopAll(); this.scene.stop('Level2Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
+        const ui = this.scene.get('UIScene');
+        if (ui) {
+            ui.showEndGameScreen({
+                title: 'LEVEL 2 COMPLETE',
+                titleColor: '#ffdd00',
+                score: this.score,
+                healthBonus: healthBonus,
+                coinsEarned: earned,
+            });
+        }
     }
 
     endGame(reason) {
         if (this.levelDone) return;
         this.levelDone = true;
         try { this.powerupSystem?.destroy(); } catch(e) {}
-        PlayerData.addMoney(Math.floor(this.score / 10));
-        this.time.delayedCall(100, () => { this.audio.destroy(); this.sound.stopAll(); this.scene.stop('Level2Scene'); this.scene.stop('UIScene'); this.scene.start('MenuScene'); });
+        const coinsEarned = Math.floor(this.score / 10);
+        PlayerData.addMoney(coinsEarned);
+
+        const ui = this.scene.get('UIScene');
+        if (ui) {
+            ui.showEndGameScreen({
+                title: reason === 'quit' ? 'GAME QUIT' : 'GAME OVER',
+                titleColor: '#ff4444',
+                score: this.score,
+                coinsEarned: coinsEarned,
+            });
+        }
     }
 
     showWaveLabel(text) {

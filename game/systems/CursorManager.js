@@ -78,9 +78,11 @@ export default class CursorManager {
         gameObject.on('pointerout',   () => this.onHoverEnd());
     }
 
-    destroy() {
+    destroy(restoreCursor = true) {
         // Restore real cursor when scene shuts down
-        try { this._scene.input.setDefaultCursor('default'); } catch(e) {}
+        if (restoreCursor) {
+            try { this._scene.input.setDefaultCursor('default'); } catch(e) {}
+        }
         try { this.sprite?.destroy(); } catch(e) {}
     }
 }

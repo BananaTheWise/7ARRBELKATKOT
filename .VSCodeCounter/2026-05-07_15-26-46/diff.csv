@@ -1,0 +1,21 @@
+"filename", "language", "JavaScript", "JSON with Comments", "comment", "blank", "total"
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/Config.json", "JSON with Comments", 0, -8, 0, -1, -9
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/PlayerData.js", "JavaScript", 26, 0, 9, 11, 46
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/enemies/Enemy.js", "JavaScript", 11, 0, 7, 2, 20
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/player/Player.js", "JavaScript", 51, 0, 3, 9, 63
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Endless.js", "JavaScript", -172, 0, -12, -39, -223
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessBase.js", "JavaScript", 248, 0, 21, 53, 322
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessEasy.js", "JavaScript", 25, 0, 1, 2, 28
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessHard.js", "JavaScript", 25, 0, 1, 2, 28
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessMedium.js", "JavaScript", 25, 0, 1, 2, 28
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level1.js", "JavaScript", -82, 0, -30, -21, -133
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level2.js", "JavaScript", -75, 0, -27, -21, -123
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/GameScene.js", "JavaScript", -1, 0, -2, 0, -3
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/MenuScene.js", "JavaScript", -33, 0, 0, -3, -36
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/PreloadScene.js", "JavaScript", 15, 0, 2, 4, 21
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/UIScene.js", "JavaScript", -3, 0, -11, -3, -17
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/AudioSystem.js", "JavaScript", 137, 0, 17, 30, 184
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/CursorManager.js", "JavaScript", 54, 0, 18, 14, 86
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/PowerupSystem.js", "JavaScript", 6, 0, -1, -1, 4
+"/home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/SpawnSystem.js", "JavaScript", 8, 0, 1, 1, 10
+"Total", "-", 265, -8, -2, 41, 296

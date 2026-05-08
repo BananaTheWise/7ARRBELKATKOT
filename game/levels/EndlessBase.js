@@ -185,7 +185,7 @@ export default class EndlessBase extends Phaser.Scene {
 
         if (allDead) {
             this.registry.events.emit('game-over');
-            this.endGame('dead');
+            this.time.delayedCall(1000, () => this.endGame('dead'));
         } else if (this.isCoop) {
             // Show "P1/P2 down" message but keep going
             const who = deadPlayer.playerIndex === 1 ? 'P1' : 'P2';
@@ -206,7 +206,7 @@ export default class EndlessBase extends Phaser.Scene {
         } else {
             // Solo
             this.registry.events.emit('game-over');
-            this.endGame('dead');
+            this.time.delayedCall(1000, () => this.endGame('dead'));
         }
     }
 
@@ -271,52 +271,22 @@ export default class EndlessBase extends Phaser.Scene {
         this.gameEnded = true;
 
         try { this.powerupSystem?.destroy(); } catch(e) {}
-        try { this.audio?.destroy(); } catch(e) {}
 
         const coinsEarned = Math.floor(this.score / 10);
         const isNewHigh   = PlayerData.submitScore(this.score);
         PlayerData.addMoney(coinsEarned);
 
-        this.showResultScreen(coinsEarned, isNewHigh, PlayerData.getHighscore(), reason);
-    }
-
-    showResultScreen(coinsEarned, isNewHigh, highscore, reason) {
-        const W = this.scale.width;
-        const H = this.scale.height;
-
-        this.add.rectangle(0, 0, W, H, 0x000000, 0.82).setOrigin(0).setDepth(90);
-
-        const modeLabel = this.cfg.label.toUpperCase() + (this.isCoop ? ' · CO-OP' : '');
-        this.add.text(W / 2, H / 2 - 210, modeLabel, {
-            fontSize: '18px', color: this.cfg.color, fontStyle: 'bold',
-            backgroundColor: '#111111', padding: { x: 14, y: 4 },
-        }).setOrigin(0.5).setDepth(91);
-
-        const title = isNewHigh ? '🏆 NEW HIGH SCORE!' : (reason === 'quit' ? 'GAME QUIT' : 'GAME OVER');
-        this.add.text(W / 2, H / 2 - 158, title, {
-            fontSize: '40px', color: isNewHigh ? '#ffdd00' : '#ff4444',
-            fontStyle: 'bold', stroke: '#000000', strokeThickness: 5,
-        }).setOrigin(0.5).setDepth(91);
-
-        this.add.text(W / 2, H / 2 - 95,  `Score: ${this.score}`,                    { fontSize: '30px', color: '#ffffff' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 - 50,  `Best: ${highscore}`,                      { fontSize: '20px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 - 10,  `Multiplier: ×${this.cfg.scoreMultiplier}`,{ fontSize: '18px', color: this.cfg.color }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 + 35,  `💰 +${coinsEarned} coins`,                { fontSize: '26px', color: '#ffdd00', fontStyle: 'bold' }).setOrigin(0.5).setDepth(91);
-        this.add.text(W / 2, H / 2 + 75,  `Total: ${PlayerData.getMoney()} coins`,   { fontSize: '16px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(91);
-
-        const btn = this.add.text(W / 2, H / 2 + 140, '[ Main Menu ]', {
-            fontSize: '28px', color: '#ffffff',
-            backgroundColor: '#222222', padding: { x: 20, y: 8 },
-        }).setOrigin(0.5).setDepth(91).setInteractive({ useHandCursor: true });
-
-        btn.on('pointerover',  () => btn.setStyle({ color: '#ffff00' }));
-        btn.on('pointerout',   () => btn.setStyle({ color: '#ffffff' }));
-        btn.on('pointerdown',  () => {
-            this.sound.stopAll();
-            this.audio.destroy(); // fade out nicely
-            this.scene.stop(this.scene.key);
-            this.scene.stop('UIScene');
-            this.scene.start('MenuScene');
-        });
+        const ui = this.scene.get('UIScene');
+        if (ui) {
+            ui.showEndGameScreen({
+                title: isNewHigh ? '🏆 NEW HIGH SCORE!' : (reason === 'quit' ? 'GAME QUIT' : 'GAME OVER'),
+                titleColor: isNewHigh ? '#ffdd00' : '#ff4444',
+                score: this.score,
+                best: PlayerData.getHighscore(),
+                multiplier: this.cfg.scoreMultiplier,
+                coinsEarned: coinsEarned,
+                isNewHigh: isNewHigh
+            });
+        }
     }
 }
