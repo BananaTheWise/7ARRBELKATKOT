@@ -1,0 +1,61 @@
+Date : 2026-05-08 22:34:24
+Directory : /home/mrbanana/VSCODE/7ARRBELKATKOT/game
+Total : 26 files,  2542 codes, 210 comments, 488 blanks, all 3240 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JavaScript |         23 |      2,351 |        210 |        488 |      3,049 |
+| JSON       |          3 |        191 |          0 |          0 |        191 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                  | files      | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                     |         26 |      2,542 |        210 |        488 |      3,240 |
+| data                                                                  |          4 |        333 |         20 |         30 |        383 |
+| entities                                                              |          5 |        332 |         43 |         68 |        443 |
+| entities/bosses                                                       |          1 |         35 |          4 |          9 |         48 |
+| entities/bullets                                                      |          1 |         33 |          6 |          7 |         46 |
+| entities/enemies                                                      |          1 |         85 |          9 |         16 |        110 |
+| entities/player                                                       |          1 |        145 |         18 |         28 |        191 |
+| entities/powerups                                                     |          1 |         34 |          6 |          8 |         48 |
+| levels                                                                |          6 |        696 |         35 |        141 |        872 |
+| scenes                                                                |          5 |        705 |         57 |        151 |        913 |
+| systems                                                               |          6 |        476 |         55 |         98 |        629 |
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                              | language   | code       | comment    | blank      | total      |
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/PlayerData.js           | JavaScript |        142 |         20 |         30 |        192 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/bosses.json             | JSON       |         62 |          0 |          0 |         62 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/enemies.json            | JSON       |         62 |          0 |          0 |         62 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/data/ships.json              | JSON       |         67 |          0 |          0 |         67 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/bosses/Boss.js      | JavaScript |         35 |          4 |          9 |         48 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/bullets/Bullet.js   | JavaScript |         33 |          6 |          7 |         46 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/enemies/Enemy.js    | JavaScript |         85 |          9 |         16 |        110 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/player/Player.js    | JavaScript |        145 |         18 |         28 |        191 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/entities/powerups/Powerup.js | JavaScript |         34 |          6 |          8 |         48 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessBase.js        | JavaScript |        225 |         21 |         46 |        292 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessEasy.js        | JavaScript |         25 |          1 |          2 |         28 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessHard.js        | JavaScript |         25 |          1 |          2 |         28 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/EndlessMedium.js      | JavaScript |         25 |          1 |          2 |         28 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level1.js             | JavaScript |        194 |          7 |         45 |        246 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/levels/Level2.js             | JavaScript |        202 |          4 |         44 |        250 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/BootScene.js          | JavaScript |         11 |          4 |          3 |         18 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/GameScene.js          | JavaScript |         25 |          2 |          4 |         31 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/MenuScene.js          | JavaScript |        276 |         13 |         54 |        343 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/PreloadScene.js       | JavaScript |        113 |         18 |         28 |        159 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/scenes/UIScene.js            | JavaScript |        280 |         20 |         62 |        362 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/AudioSystem.js       | JavaScript |        137 |         17 |         31 |        185 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/CombatSystem.js      | JavaScript |         15 |          5 |          3 |         23 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/CursorManager.js     | JavaScript |         56 |         18 |         14 |         88 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/LevelSystem.js       | JavaScript |         43 |          3 |         12 |         58 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/PowerupSystem.js     | JavaScript |        185 |         10 |         30 |        225 |
+| /home/mrbanana/VSCODE/7ARRBELKATKOT/game/systems/SpawnSystem.js       | JavaScript |         40 |          2 |          8 |         50 |
+| Total                                                                 |            |      2,542 |        210 |        488 |      3,240 |
++-----------------------------------------------------------------------+------------+------------+------------+------------+------------+
