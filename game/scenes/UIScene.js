@@ -26,6 +26,11 @@ export default class UIScene extends Phaser.Scene {
         this.paused    = false;
         this.endScreen = null;
 
+        // Ensure UI icons use high-quality linear filtering so they look HD when scaled down
+        this.textures.get('health_icon').setFilter(Phaser.Textures.FilterMode.LINEAR);
+        this.textures.get('shield_icom').setFilter(Phaser.Textures.FilterMode.LINEAR);
+        this.textures.get('logo').setFilter(Phaser.Textures.FilterMode.LINEAR);
+
         // Hide the default cursor during gameplay
         this.input.setDefaultCursor('none');
 
@@ -55,10 +60,15 @@ export default class UIScene extends Phaser.Scene {
         const LR  = 24, LX = W / 2, LY = MID;
         this.add.circle(LX, LY, LR + 2, 0x222222);
         const logo = this.add.image(LX, LY, 'logo').setDisplaySize(LR * 2, LR * 2);
+        
+        // The current Phaser build does not include BitmapMask, reverting to GeometryMask.
         const mask = this.make.graphics({ x: 0, y: 0, add: false });
         mask.fillStyle(0xffffff);
         mask.fillCircle(LX, LY, LR);
         logo.setMask(mask.createGeometryMask());
+
+        // Draw a smooth ring over the edge to hide the jagged GeometryMask corners!
+        this.add.graphics().lineStyle(3, 0x222222).strokeCircle(LX, LY, LR);
 
         // Score
         const SX = W / 2 + 80;

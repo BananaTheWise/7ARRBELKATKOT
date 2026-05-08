@@ -1,0 +1,11 @@
+# 7ARRBELKATKOT Game Requirements
+
+# 1. Game Engine
+phaser==3.60.0 (Already bundled locally via phaser.min.js)
+
+# 2. Environment
+# A local HTTP server is required to bypass browser CORS restrictions for ES6 modules.
+# You can use any of the following to serve the directory:
+# - VS Code Live Server Extension
+# - Python: `python -m http.server`
+# - Node.js: `npx serve` or `npm install -g http-server`
