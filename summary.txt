@@ -1,0 +1,695 @@
+================================================================================
+               7ARRBELKATKOT - SPACE SHOOTER PROJECT SUMMARY
+================================================================================
+
+Table of Contents:
+1. High-Level Overview
+2. Phaser 3 Integration and Configuration
+3. Scene Lifecycle and Routing
+4. Architectural Patterns & Object Oriented Design
+5. Event-Driven Communication (How Classes Talk)
+6. Game Systems Breakdown
+7. Entity Class Breakdown (Sprites, Physics, AI)
+8. User Interface (UI) and HUD
+9. Data and State Management
+10. Execution Flows (Step-by-step logic)
+
+================================================================================
+1. HIGH-LEVEL OVERVIEW
+================================================================================
+7ARRBELKATKOT is a web-based 2D space shooter game built using the Phaser 3 
+framework. It features hand-crafted progression levels (Level 1, Level 2) as 
+well as an Endless Mode with varying difficulties (Easy, Medium, Hard). The 
+game supports both Solo and Local Co-op gameplay.
+
+The project is structured using modern ES6 JavaScript Modules (ESM), dividing 
+the codebase into logical directories:
+- `game/scenes/`: Handles distinct game states (Boot, Preload, Menu, UI, Levels).
+- `game/systems/`: Manages specific gameplay loops (Spawning, Combat, Audio).
+- `game/entities/`: Defines interactive game objects (Player, Enemy, Bullet).
+- `game/data/`: Handles persistent storage and game configurations.
+
+================================================================================
+2. PHASER 3 INTEGRATION AND CONFIGURATION
+================================================================================
+The entry point of the game is `main.js`. It initializes the Phaser Game 
+instance with the following core configurations:
+
+A. Rendering and Scale
+- `type: Phaser.AUTO`: Phaser will attempt to use WebGL rendering by default, 
+  falling back to the Canvas API if WebGL is unsupported by the browser.
+- `scale`: The game uses `Phaser.Scale.FIT` and `CENTER_BOTH`. This means the 
+  1280x720 base resolution will automatically scale to fit the user's browser 
+  window while maintaining the 16:9 aspect ratio, preventing distortion.
+
+B. Physics Engine
+- `physics.default: 'arcade'`: The game relies on Phaser's Arcade Physics 
+  engine, which uses Axis-Aligned Bounding Boxes (AABB) for fast, efficient 
+  2D collision detection.
+- Gravity is disabled (`y: 0`) since this is a top-down/side-scrolling space 
+  shooter where entities move via direct velocity manipulation rather than 
+  falling.
+
+C. Scene Registration
+All scenes are registered in the `scene` array inside `main.js`. The order 
+matters only for the first scene (`BootScene`), which auto-starts. All other 
+scenes are started explicitly via the Scene Manager.
+
+================================================================================
+3. SCENE LIFECYCLE AND ROUTING
+================================================================================
+The game utilizes a multi-scene architecture, often running scenes in parallel 
+(e.g., a Level scene running simultaneously with the UI scene).
+
+A. BootScene.js
+- The absolute bare minimum scene. Its only job is to start the `PreloadScene`.
+- Often used to load a lightweight loading bar graphic before the heavy assets 
+  begin downloading.
+
+B. PreloadScene.js
+- Handles the heavy lifting of asset fetching.
+- Uses `this.load.image`, `this.load.audio`, `this.load.json`, etc.
+- Generates a dynamic loading bar using `Phaser.GameObjects.Graphics`.
+- Uses event listeners (`this.load.on('progress')`) to update the visual 
+  loading bar.
+- Includes an error handler (`filefail`) that catches missing JSON files and 
+  provides empty fallback objects to prevent fatal game crashes.
+- Transitions to `MenuScene` upon completion.
+
+C. MenuScene.js
+- The main hub for the user.
+- Uses `this.add.container` to manage different UI screens (Play, Shop, 
+  Options, Story). The `switchTo()` method destroys the old container and 
+  builds a new one, ensuring clean memory management.
+- Reads and writes to persistent storage via `PlayerData`.
+- Uses `AudioSystem` to play background music immediately.
+
+D. GameScene.js (The Router)
+- This is a highly decoupled routing scene. It does NOT contain gameplay.
+- When the user selects a mode in the Menu, they start `GameScene` and pass 
+  an initialization payload: `{ mode: 'level1', coop: false }`.
+- `GameScene.init(data)` captures this data and maps the `mode` string to 
+  the actual Scene Key (e.g., 'Level1Scene', 'EndlessEasy').
+- It then starts the target scene.
+
+E. UIScene.js
+- Runs in parallel with the active gameplay scene.
+- Sits on top of the game (`setDepth`) and draws the HUD (Health Bar, Shield 
+  Bar, Score).
+- Contains the Pause Menu logic. When paused, it triggers `this.scene.pause()` 
+  on the active game scene, freezing its update loop and physics while keeping 
+  the UI interactive.
+- Contains the End Game / Win screen overlays.
+
+F. Level1.js (Gameplay implementation)
+- Contains the actual game loop, physics group creations, and enemy spawning.
+- Utilizes scripted waves (`WAVES` array) to orchestrate enemy appearances.
+- Connects all independent systems (`AudioSystem`, `CombatSystem`, etc.).
+
+================================================================================
+4. ARCHITECTURAL PATTERNS & OBJECT ORIENTED DESIGN
+================================================================================
+The project follows several excellent architectural patterns:
+
+A. Composition over Inheritance (Systems)
+Instead of placing all logic inside the Scene, the game utilizes standalone 
+System classes (`CombatSystem`, `PowerupSystem`, `SpawnSystem`). The Scene 
+instantiates these classes and passes a reference to itself (`this.scene = scene`). 
+This keeps the Scene lightweight and allows logic to be reused across different 
+levels (Endless vs Level 1).
+
+B. Object Pooling
+Creating and destroying objects constantly (like bullets) triggers JavaScript 
+Garbage Collection, causing frame-rate drops. The game uses Phaser Physics 
+Groups with a `maxSize` (e.g., `this.playerBullets = this.physics.add.group({ 
+maxSize: 50 })`). 
+When a bullet goes off-screen, it is deactivated (`setActive(false)`), and when 
+the player shoots, it is recycled (`this.playerBullets.get()`).
+
+C. Data-Driven Design
+Ships, Bosses, and Enemies are not hardcoded. Their stats are defined in JSON 
+files (`ships.json`, `enemies.json`). The code fetches these stats via 
+`this.cache.json.get()`. This allows designers to tweak health, damage, and 
+speed without touching the JavaScript logic.
+
+================================================================================
+5. EVENT-DRIVEN COMMUNICATION (HOW CLASSES TALK)
+================================================================================
+Classes in this project rarely call methods on each other directly if they 
+don't have to. They communicate via events.
+
+A. Phaser Registry Events (Cross-Scene Communication)
+- Phaser has a global data registry (`this.registry`).
+- `Level1.js` (Gameplay) updates the score: 
+  `this.registry.events.emit('update-score', this.score);`
+- `UIScene.js` (Interface) listens for this event: 
+  `this.registry.events.on('update-score', this.updateScore, this);`
+- This strictly decouples the UI from the gameplay state.
+
+B. Local Custom Events (Intra-Scene Communication)
+- Entities extend `Phaser.GameObjects.Sprite` (which extends EventEmitter).
+- When the Player takes damage, it doesn't touch the UI itself. It calculates 
+  its internal HP, then fires: `this.emit('damaged', this.health);`
+- The Level scene listens to this: 
+  `this.player.on('damaged', hp => this.registry.events.emit('update-health', hp));`
+
+C. Physics Collisions (System-to-Entity)
+- Phaser Physics Groups handle interactions.
+- `this.physics.add.overlap(groupA, groupB, callback)` monitors physical bounds.
+- When a bullet overlaps an enemy, the `CombatSystem.handleBulletHitEnemy` 
+  callback is triggered. The callback identifies the objects and applies the 
+  damage logic.
+
+================================================================================
+6. GAME SYSTEMS BREAKDOWN
+================================================================================
+
+A. PowerupSystem.js
+- Manages dropping and collecting powerups.
+- Uses `this.scene.time.delayedCall()` to handle powerup duration.
+- Temporarily alters the Player object's methods via prototype overriding! 
+  For the Golden Star, it binds the player's original `takeDamage` method to a 
+  temp variable (`p._origTakeDamage`), overrides it with an empty function 
+  `() => {}` to grant invincibility, and restores it when the timer expires.
+- Dynamically generates custom text labels (`showLabel`) that tween upwards 
+  when a powerup is collected.
+
+B. AudioSystem.js
+- Centralizes all audio playback.
+- Stores instances of `Phaser.Sound.BaseSound`.
+- Implements a rate-limiting cooldown mechanism for SFX (e.g., `shoot` can 
+  only be played every 150ms). This prevents audio clipping and distortion 
+  when many bullets are fired simultaneously.
+- Uses local storage settings to honor user muting choices.
+
+C. CombatSystem.js
+- Dedicated to handling collision outcomes. 
+- Ensures bullets are deactivated and applies the correct damage values pulled 
+  from the bullet/enemy configurations.
+
+D. CursorManager.js
+- Hides the default operating system mouse cursor.
+- Spawns a custom Sprite (`cursor_anim_1`) that uses linear interpolation (lerp) 
+  to follow the mouse pointer: `sprite.x += (target.x - sprite.x) * 0.35`.
+- This creates a smooth, trailing "game feel" cursor.
+
+E. SpawnSystem.js
+- Used primarily in Endless Mode.
+- Uses a repeating timer. Every X milliseconds, it picks a random enemy 
+  definition from the JSON cache, instantiates the `Enemy` class, and adds it 
+  to the scene.
+- Features dynamic difficulty: `increaseDifficulty(level)` reduces the spawn 
+  interval over time, making enemies spawn faster.
+
+================================================================================
+7. ENTITY CLASS BREAKDOWN (SPRITES, PHYSICS, AI)
+================================================================================
+
+A. Enemy.js
+- Extends `Phaser.Physics.Arcade.Sprite`.
+- Takes a `config` object in its constructor that defines its `hp`, `speed`, 
+  `damage`, and `behavior`.
+- Uses `body.setSize()` to shrink its physical hitbox to 60% of the visual 
+  sprite, giving the player more leeway and making collisions feel "fairer."
+- The `update(time)` method contains AI behavior branches:
+  - `zigzag`: Modulates Y velocity using `Math.sin()`.
+  - `wave`: Modulates Y velocity using `Math.cos()`.
+  - `straight`: Constant negative X velocity.
+- Can independently fire bullets if `config.shoot` is true, utilizing the 
+  passed `enemyBullets` pool.
+- Handles its own death sequence via `takeDamage()`, spawning an explosion 
+  sprite and playing an animation before calling `this.destroy()`.
+
+B. Bullet.js
+- Extends `Phaser.Physics.Arcade.Image` (Images are lighter than Sprites, 
+  ideal for bullets since they don't animate).
+- Begins life completely disabled.
+- The `fire(x, y, velX, velY, textureKey, damage)` method resets the bullet to 
+  the firing location, applies the requested texture and damage, turns on 
+  the physics body, and applies velocity.
+- The `update()` method checks if the bullet has left the screen bounds, and 
+  if so, disables it to be returned to the pool.
+
+C. Powerup.js
+- Extends `Phaser.Physics.Arcade.Sprite`.
+- Upon spawning (`applyVelocity`), it moves left across the screen.
+- Attaches a `Phaser.Tweens.Tween` to itself to create a bobbing motion on 
+  the Y-axis (`yoyo: true`, `repeat: -1`, `ease: 'Sine.easeInOut'`).
+
+================================================================================
+8. USER INTERFACE (UI) AND HUD
+================================================================================
+The `UIScene` is a persistent overlay.
+
+A. HUD Construction
+- Uses `Phaser.GameObjects.Rectangle` for the health and shield bars. 
+- To animate health loss, it calculates the percentage (`health / maxHealth`) 
+  and directly manipulates `this.healthBar.width`.
+- The health bar changes color based on the percentage (Green > 60%, Orange > 
+  30%, Red < 30%) using `setFillStyle(hexColor)`.
+- The logo utilizes a `GeometryMask` to clip its square image into a perfect 
+  circle, overlaying a stroked graphics ring to hide any aliasing artifacts.
+
+B. Pause Menu
+- A Container (`this.pauseMenu`) holds the dark overlay and buttons.
+- Interaction is tied to Phaser's Pointer events (`pointerover`, `pointerdown`).
+- When 'Main Menu' is clicked from the Pause menu, the `quitToEndScreen()` 
+  method forces the active gameplay scene to trigger its `endGame('quit')` 
+  sequence, ensuring coins are calculated and saved before transitioning scenes.
+
+C. End Screen
+- Dynamically built when `showEndGameScreen` is triggered.
+- Halts the game scenes entirely.
+- Displays score, best score, multipliers, health bonuses, and earned currency.
+
+================================================================================
+9. DATA AND STATE MANAGEMENT
+================================================================================
+A. PlayerData.js (Assumed structure based on references)
+- Acts as a static wrapper around the browser's `localStorage` API.
+- Keeps track of `money` (coins), `highscore`, `ownedShips` (array), and 
+  `selectedShip`.
+- `addMoney()`, `buyShip()`, and `selectShip()` mutate the in-memory state 
+  and immediately serialize the state back to `localStorage`.
+
+B. Audio Settings
+- Audio toggles in the Menu and Pause screens read from and write to an 
+  `audio_settings` JSON string in `localStorage`.
+
+C. Level State (Level1.js)
+- Uses boolean flags (`levelDone`, `waveActive`, `bossSpawned`) as a lightweight 
+  state machine to prevent multiple triggers (e.g., preventing the win screen 
+  from showing twice, or the boss spawning multiple times).
+
+================================================================================
+10. EXECUTION FLOWS (STEP-BY-STEP LOGIC)
+================================================================================
+
+FLOW A: Starting the Game
+1. The user opens the index.html page.
+2. `main.js` executes, creating the `Phaser.Game` instance.
+3. `BootScene` begins. It registers the minimal loading assets.
+4. `BootScene` calls `scene.start('PreloadScene')`.
+5. `PreloadScene` queues all images, JSONs, and audio files. As they download, 
+   the `progress` event updates the loading bar.
+6. Once complete, `PreloadScene` calls `scene.start('MenuScene')`.
+7. `MenuScene` reads `PlayerData`, displays the user's coins/ship, and plays 
+   the menu music.
+
+FLOW B: Navigating to a Level
+1. User clicks "Level 1" in the Play Menu.
+2. `MenuScene.startGame('level1')` is called.
+3. It stops all sounds, stops `UIScene`, and starts `GameScene` with the mode data.
+4. It re-launches `UIScene` to reset the HUD, and emits 0 score/health to the registry.
+5. `GameScene` routes 'level1' to `scene.start('Level1Scene')`.
+6. `Level1.create()` initializes the player, physics groups, and background.
+7. A timer delays 1 second, then calls `startNextWave()`.
+
+FLOW C: Enemy Spawning to Death (Level 1)
+1. `startNextWave()` reads the `WAVES` array at the current index.
+2. For each enemy key in the wave, it calls `spawnEnemy()`.
+3. `spawnEnemy()` fetches stats from `enemiesData` JSON, maps the texture, 
+   and creates an `Enemy` instance.
+4. The `Enemy` is added to `this.enemies` physics group.
+5. `enemy.applyVelocity()` is called to start its movement.
+6. In `update()`, the `Enemy` moves based on its behavior (e.g., zigzag).
+7. The Player shoots a `Bullet`.
+8. The Physics Engine detects an overlap between the Bullet and the Enemy.
+9. `CombatSystem.handleBulletHitEnemy()` executes.
+10. The bullet is disabled. `enemy.takeDamage(10)` is called.
+11. The enemy's HP drops to 0. It calls `spawnExplosion()`.
+12. The enemy notifies the scene: `scene.onEnemyKilled()`.
+13. The scene increases the score and updates the registry.
+14. The scene notifies the `PowerupSystem`, which rolls a random chance to spawn a drop.
+15. The `Enemy` instance calls `this.destroy()`, removing it from memory.
+
+FLOW D: Exiting back to the Menu
+1. The user pauses the game and clicks "Main Menu", or the game ends (Win/Loss) 
+   and the user clicks "Main Menu" on the end screen.
+2. `UIScene.goToMenu()` executes.
+3. It iterates through all active game scenes via `this.getGameScenes()`.
+4. It unpauses them if they were paused.
+5. It calculates earned coins (`score / 10`) and adds them to `PlayerData`.
+6. It calls `.destroy()` on the active scene's powerup and audio systems.
+7. It stops the active scene: `this.scene.stop(key)`.
+8. It stops all global sounds.
+9. A delayed call runs 80ms later (to allow physics cleanup) that stops the 
+   `UIScene` and starts `MenuScene`.
+
+================================================================================
+CONCLUSION
+================================================================================
+The 7ARRBELKATKOT project demonstrates a highly robust, scalable, and decoupled 
+architecture using Phaser 3. By aggressively relying on data-driven design 
+(JSON configurations), component-based systems (Spawn/Combat/Audio), and 
+event-driven cross-scene communication (Registry), the codebase is extremely 
+modular. The implementation of object pooling ensures high performance, while 
+the strict separation of concerns between UI and Gameplay provides a crash-free 
+user experience during pausing and scene transitions.
+
+================================================================================
+11. DEEP DIVE: ENDLESS MODE ARCHITECTURE (EndlessBase.js)
+================================================================================
+Endless Mode relies on a base class (`EndlessBase`) which extends `Phaser.Scene`.
+This approach utilizes inheritance to share the core endless logic across 
+multiple difficulties. 
+
+A. Difficulty Configuration
+- Handled via `getDifficultyConfig()`. Subclasses (like `EndlessEasy.js`) 
+  override this method to return a specific payload.
+- The payload dictates:
+  - `scoreMultiplier`: Increases points earned per kill/second.
+  - `spawnInterval`: The starting delay between enemy spawns (e.g., 2500ms).
+  - `spawnIntervalMin`: The absolute cap on how fast enemies can spawn.
+  - Multipliers for enemy stats: `enemySpeedMult`, `enemyHpMult`, `enemyDamageMult`.
+
+B. Initialization & Shared State
+- `init(data)` catches the routing payload from `GameScene` to determine if 
+  the mode is co-op (`this.isCoop = data?.coop === true`).
+- Creates a global `this.players` array so systems can easily iterate over 
+  active ships.
+- Connects independent systems (`SpawnSystem`, `LevelSystem`, `CombatSystem`, 
+  `PowerupSystem`, `AudioSystem`).
+
+C. Time-based Scoring
+- In the `update()` loop, a `scoreTimer` accumulates `delta` time.
+- Every 1000ms (1 second), the game awards survival points based on a formula:
+  `(baseScorePerSec + (level - 1) * scalePerLevel) * scoreMultiplier`
+
+D. Collision Overlaps (registerPlayerOverlaps)
+- Defines three major collision rules per player:
+  1. Player Bullets vs Enemies -> Delegates to `CombatSystem.handleBulletHitEnemy`.
+  2. Enemy Bullets vs Player -> Deactivates the bullet and damages the player.
+  3. Enemy Body vs Player (Crash) -> Triggers an instant kill on the enemy, 
+     gives crash bonus score, and severely damages the player (20 HP).
+
+================================================================================
+12. DEEP DIVE: LEVEL 1 CAMPAIGN ARCHITECTURE (Level1.js)
+================================================================================
+Unlike Endless mode, Campaign levels are strictly scripted experiences.
+
+A. Wave Management
+- Relies on a hardcoded `WAVES` multi-dimensional array.
+- Example: `['basic', 'basic', 'zigzagger', 'zigzagger']`.
+- `startNextWave()` reads the current index, increments it, and loops over the 
+  array. It uses `this.time.delayedCall(i * 600)` to spawn each enemy in the 
+  wave with a 600ms stagger, creating a natural "formation" feel.
+- A 500ms repeating timer monitors the `this.enemies` group. When 
+  `countActive(true) === 0`, the wave is considered cleared, and the next wave 
+  is triggered after a 1.5s delay.
+
+B. Texture Mapping
+- Campaign levels often use level-specific art (e.g., Ice theme for Level 1).
+- The `spawnEnemy(key)` method uses a `textureMap` to swap generic JSON enemy 
+  keys for level-specific sprites (e.g., `basic` becomes `enemy_basic_level1`).
+- Tethers the `Boss` spawn to the exhaustion of the `WAVES` array.
+
+C. State Machine Flags
+- Employs `this.waveActive`, `this.bossSpawned`, and `this.levelDone` to 
+  prevent race conditions (like spawning the boss twice or firing multiple 
+  "Win" events if bullets hit the boss frame-perfectly simultaneously).
+
+================================================================================
+13. DEEP DIVE: UI AND HUD MANAGEMENT (UIScene.js)
+================================================================================
+The `UIScene` is a persistent, parallel scene that sits above all gameplay 
+(`setDepth`). It is never paused when the game is paused.
+
+A. High-Quality Rendering
+- Uses `setFilter(Phaser.Textures.FilterMode.LINEAR)` on UI icons. This ensures 
+  that when high-res assets are scaled down to fit the HUD, they use bilinear 
+  filtering and avoid pixelated, jagged edges (aliasing).
+- The Player Avatar/Logo is masked into a circle. Because Phaser's WebGL 
+  `GeometryMask` can leave jagged edges, the UI draws a smooth, stroked 
+  vector circle (`strokeCircle`) perfectly over the mask's perimeter to hide 
+  the artifacts.
+
+B. Dynamic Health & Shield Bars
+- Uses `Phaser.GameObjects.Rectangle` with a dynamic `width` property.
+- When `updateHealth(v)` is called via the global Registry, it calculates a 
+  clamped percentage: `pct = Clamp(health / maxHealth, 0, 1)`.
+- Modifies the width using `Math.floor(pct * BAR_W)`.
+- Applies conditional coloring using `setFillStyle()`:
+  - > 60%: 0x2ecc71 (Green)
+  - > 30%: 0xe67e22 (Orange)
+  - < 30%: 0xe74c3c (Red)
+
+C. Advanced Pause Menu Logic
+- Builds a custom `Container` (`this.pauseMenu`) holding the dimming rectangle 
+  and interactive text buttons.
+- When toggled, it uses `this.scene.manager.scenes` to fetch all actively 
+  running game scenes (filtering out protected ones like Menu/Boot).
+- It pauses them natively using `this.scene.pause(sceneKey)`.
+- Mute buttons directly manipulate localStorage (`audio_settings`) and iterate 
+  through active scenes to call `setMusicEnabled()` and `setSFXEnabled()` on 
+  the `AudioSystem` instances.
+
+D. Graceful Menu Exits (`goToMenu`)
+- A known crash point in Phaser multi-scene setups is stopping a scene while 
+  it is paused (physics engines get stuck).
+- `goToMenu()` solves this by explicitly iterating through scenes, unpausing 
+  them (`this.scene.resume(k)`), executing cleanup routines (`destroy()` on 
+  timers and audio), and then stopping them safely.
+- Safely transitions back to `MenuScene` using a slight 80ms delay.
+
+================================================================================
+14. DEEP DIVE: MENU AND STATE ROUTING (MenuScene.js)
+================================================================================
+Acts as the interactive hub, heavily utilizing Phaser Containers for component 
+swapping.
+
+A. Memory Management (`switchTo`)
+- Instead of hiding/showing UI elements, the menu uses `switchTo(builderFn)`.
+- It completely destroys the `activeContainer` (`this.activeContainer.destroy(true)`), 
+  flushing old buttons from memory, before building a new one.
+
+B. Dynamic Store Generation (`showShop`)
+- Automatically parses `shipsData` JSON from the Phaser Cache.
+- Generates interactive `Ship Cards` containing textures, stat texts 
+  (Speed, HP, Damage, Fire Rate), and contextual buttons.
+- Logic branching:
+  - If the ship is `SELECTED`: Highlights yellow.
+  - If `OWNED` but not selected: Shows a "SELECT" button.
+  - If `NOT OWNED`: Shows a "BUY" button with price.
+- Interacts with `PlayerData.buyShip()` and instantly updates the UI using 
+  a toast notification (`showToast`).
+
+C. Story / Overlay Management
+- The `showStory()` screen generates a fullscreen black rectangle with 80% 
+  opacity. It calls `.setInteractive()`, which consumes all pointer events. 
+  This prevents the user from accidentally clicking buttons in the underlying 
+  menu container while the story is open.
+
+================================================================================
+15. DEEP DIVE: POWERUP SYSTEM (PowerupSystem.js)
+================================================================================
+A complex standalone system managing temporary player buffs and physics 
+interactions.
+
+A. Architecture & Pooling
+- Creates its own physics group for powerup sprites (`this.group`).
+- Instead of the Player checking for powerups, `PowerupSystem` registers an 
+  overlap callback for ALL players (`registerPlayerOverlap(playerRef)`).
+
+B. Effect Management (`applyEffect` & `expireEffect`)
+- Timers are managed via `this.active[type] = this.scene.time.delayedCall(...)`.
+- **Shield**: Grants a direct addition of 50 shield points to the shared pool.
+- **Attack Speed**: Stores the player's original fire rate (`_origCooldown`), 
+  halves the current fire rate, and restores it when the timer fires.
+- **Health**: Restores 30 HP to the shared pool immediately (no timer).
+- **Golden Star (Invincibility)**:
+  1. Stores original `takeDamage` method.
+  2. Overrides `takeDamage` to a blank function `() => {}`.
+  3. Divides fire cooldown by 3 (extreme rapid fire).
+  4. Applies a bright yellow tint to the player sprite.
+  5. Attaches a dynamic physics overlap between the player and ALL enemies, 
+     instantly destroying enemies upon physical contact.
+  6. Upon expiration, unbinds the overlap, restores `takeDamage`, and clears 
+     the tint (restoring the blue tint for P2 if in Co-op).
+
+C. Refresh Logic
+- If a player picks up a powerup that is already active, it checks 
+  `this.active[type]`.
+- It resets the delayed call timer (`reset({ delay, repeat: 0 })`) so the 
+  buff duration starts over, avoiding overlapping timers resetting early.
+
+================================================================================
+16. DEEP DIVE: GAME CONFIGURATION & BOOT (main.js)
+================================================================================
+The initialization configuration for Phaser 3 dictates how the engine interacts 
+with the browser environment.
+
+A. Renderer: `Phaser.AUTO`
+- Automatically attempts to initialize the `WebGLRenderer`.
+- If WebGL is blocked, unsupported, or drivers are missing, it silently falls 
+  back to the `CanvasRenderer` (software rendering).
+
+B. Aspect Ratio Scaling
+- Base resolution: `1280x720` (Standard 16:9 720p).
+- `Phaser.Scale.FIT`: Calculates the aspect ratio of the user's browser window. 
+  It will scale the game canvas up or down to ensure the entire 1280x720 area 
+  is visible without clipping.
+- `Phaser.Scale.CENTER_BOTH`: Calculates remaining blank space (letterboxing 
+  or pillarboxing) and centers the canvas node vertically and horizontally 
+  via CSS margins.
+
+C. Arcade Physics
+- Global gravity is set to 0.
+- `debug: false` (Can be toggled to true by developers to visualize bounding 
+  boxes, velocities, and overlap zones during testing).
+
+D. Scene Array
+- `[BootScene, PreloadScene, MenuScene, ...]`
+- Phaser instantiates scenes sequentially. The *first* scene in the array 
+  is automatically started (`BootScene`). The rest remain dormant in the 
+  SceneManager until explicitly called via `scene.start()`.
+
+================================================================================
+17. LOCAL MULTIPLAYER & CO-OP IMPLEMENTATION
+================================================================================
+The game features a drop-in local multiplayer system where two players share 
+the same screen and keyboard.
+
+A. Control Mapping
+- Player 1 uses `W, A, S, D` for movement and `SPACE` for firing.
+- Player 2 uses the `ARROW KEYS` for movement and `ENTER` for firing.
+- These are mapped via `Phaser.Input.Keyboard.KeyCodes` and passed directly 
+  to the `Player` class constructor via `P1_CONTROLS` and `P2_CONTROLS` objects.
+
+B. Shared Pools vs Individual State
+- **Shared**: Health, Shields, and Score. 
+  If Player 1 takes damage, the global UI health drops. If health reaches 0, 
+  both players are affected.
+- **Individual**: Velocity, Fire Rate Cooldowns, Input Polling, and Bullet 
+  Sources.
+- **Coop Flag**: `this.isCoop`. When true, systems like `PowerupSystem` apply 
+  buffs (like Attack Speed) to *both* entities by iterating over `getAllPlayers()`.
+
+C. Distinction
+- Both players use the same ship class/sprite, but Player 2 is dynamically 
+  tinted light blue (`0xaaddff`) to prevent visual confusion during chaotic 
+  gameplay.
+- Custom floating text tags ("P1", "P2") are spawned above the ships at the 
+  start of the level to establish orientation.
+
+================================================================================
+18. PERFORMANCE OPTIMIZATIONS & MEMORY MANAGEMENT
+================================================================================
+JavaScript engines are prone to stuttering if Garbage Collection (GC) runs 
+frequently. 7ARRBELKATKOT mitigates this using strict design patterns.
+
+A. Object Pooling (Bullets and Enemies)
+- The game uses `this.physics.add.group({ maxSize: X })`.
+- Instead of `new Bullet(...)`, the player uses `this.bulletGroup.get(x, y)`.
+- `get()` checks for an inactive sprite. If none exist, it creates one (up to 
+  `maxSize`). If the pool is exhausted, the player simply cannot shoot.
+- When bullets leave the screen (`y < 0` or `x > width`), they call 
+  `this.setActive(false).setVisible(false)`. This returns them to the pool 
+  WITHOUT destroying them, completely avoiding GC spikes.
+
+B. Event Listener Cleanup
+- Entities and Scenes aggressively clean up listeners.
+- In `UIScene.js`, the `shutdown()` method executes `this.registry.events.off(...)` 
+  for every listener it added. Failure to do this would result in a memory leak 
+  every time the user navigates between the Menu and the Game.
+
+C. Tween Cleanup
+- Tweens (like dynamic text popups or floating powerups) use the 
+  `onComplete: () => obj.destroy()` callback. This ensures temporary visual 
+  flourishes are wiped from memory the moment their animation finishes.
+
+D. Depth Management & Culling
+- Instead of sorting depth constantly, objects are assigned strict integer depths 
+  (UI = 100, Pause Menu = 50, Gameplay = 0).
+
+================================================================================
+19. EXTENDING THE GAME (DEVELOPER GUIDE)
+================================================================================
+This section outlines exactly how to add new content to the game structure.
+
+A. Adding a New Ship
+1. Open `shipsData.json` (or wherever it is loaded in PreloadScene).
+2. Add a new JSON key:
+   ```json
+   "ship4": {
+       "name": "Dreadnought",
+       "texture": "player_heavy",
+       "bulletTexture": "bullet_heavy",
+       "health": 200,
+       "speed": 180,
+       "damage": 30,
+       "fireRate": 400,
+       "price": 250,
+       "description": "Slow, durable, heavy hitter."
+   }
+   ```
+3. Ensure `player_heavy` and `bullet_heavy` images are loaded in `PreloadScene.js`.
+4. The Shop UI (`MenuScene.js`) will automatically parse this JSON, add it to 
+   the store layout, handle the coin deduction, and make it selectable.
+
+B. Adding a New Enemy
+1. Open `enemiesData.json`.
+2. Add the configuration:
+   ```json
+   "teleporter": {
+       "hp": 60,
+       "speed": 100,
+       "damage": 15,
+       "scoreValue": 40,
+       "behavior": "teleport",
+       "shoot": false
+   }
+   ```
+3. Open `Enemy.js` and locate the `update()` loop.
+4. Add the custom `behavior` logic:
+   ```javascript
+   if (this.config.behavior === 'teleport') {
+       this.teleportTimer += delta;
+       if (this.teleportTimer > 2000) {
+           this.y = Phaser.Math.Between(100, 600); // Random Y jump
+           this.teleportTimer = 0;
+       }
+   }
+   ```
+5. For Campaign mode, add 'teleporter' to the `textureMap` inside `Level1.js` 
+   and insert it into the `WAVES` array.
+
+C. Adding a New Powerup
+1. Open `Powerup.js` and add to the `POWERUP_TYPES` constant:
+   `BOMB: 'bomb'`
+2. Open `PowerupSystem.js` and update `_configFor(type)` to map the visual:
+   `[POWERUP_TYPES.BOMB]: { texture: 'powerup_bomb', scale: 0.08 }`
+3. Update `showLabel(type)` to provide a text popup:
+   `[POWERUP_TYPES.BOMB]: '💣 Screen Wipe'`
+4. Inside `applyEffect(type)`, add the logic:
+   ```javascript
+   case POWERUP_TYPES.BOMB:
+       // Instantly destroy all active enemies on screen
+       this.scene.enemies.getChildren().forEach(enemy => {
+           if (enemy.active) {
+               this.scene.onEnemyKilled(enemy);
+               enemy.destroy();
+           }
+       });
+       break;
+   ```
+
+================================================================================
+20. COMPONENT INTERACTION MATRIX
+================================================================================
+Understanding how components touch each other is crucial for debugging.
+
+[Scene] GameScene  -> Only manipulates SceneManager. Passes config.
+[Scene] Level1     -> Manages Groups, Instantiates Systems, Handles Waves.
+[Scene] Endless    -> Manages Groups, Instantiates Systems, Uses SpawnSystem.
+[Scene] UIScene    -> Listens to Registry. Manipulates DOM/Time. Stops/Pauses game scenes.
+[Scene] MenuScene  -> Reads/Writes PlayerData. Spawns AudioSystem.
+
+[System] Combat    -> Requires Physics overlap contexts. Mutates Enemy/Player HP.
+[System] Spawn     -> Requires Scene reference to add Enemy sprites.
+[System] Powerup   -> Requires Scene physics to register overlaps. Alters Player prototype.
+[System] Audio     -> Requires Scene to play sounds. Rate-limits audio calls.
+[System] Level     -> Handles visual level transitions (e.g. background switching).
+
+[Data] PlayerData  -> Wraps window.localStorage. Static class, instantly applies.
+[Global] Registry  -> Acts as the central nervous system. UI listens, Game emits.
