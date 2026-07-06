@@ -2,6 +2,13 @@
 
 A fast-paced, web-based 2D space shooter built with **Phaser 3**. Battle through intense levels, fight giant bosses, collect coins, and upgrade your ships in the shop! The game features both solo and local co-op gameplay.
 
+## Team Members
+
+*   Ahmed Badr 20235622
+*   Hamza Sayed 20232888
+*   Nader Sherif 20231538
+*   Youssef Ahmed 20230172
+
 ## Features
 - **Game Modes**: 
   - **Level Progression**: Hand-crafted levels (Level 1: Ice, Level 2: Lava) with unique enemies and boss fights.
